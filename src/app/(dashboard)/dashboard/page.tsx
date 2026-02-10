@@ -146,7 +146,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="border-teal-100 bg-white shadow-xl p-8 flex flex-col justify-center text-center md:text-left relative overflow-hidden">
           <div className="absolute right-0 top-0 h-full w-1 bg-emerald-500" />
-          <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
+          <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-2">
             <Wallet className="h-4 w-4 text-emerald-600" /> Valor sob Filtro
           </p>
           <div className="text-4xl font-black text-slate-900">R$ {totalOriginalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="border-teal-100 bg-white shadow-xl p-8 flex flex-col justify-center text-center md:text-left relative overflow-hidden">
-          <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Itens Listados</p>
+          <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Itens Listados</p>
           <div className="text-4xl font-black text-slate-900">{filteredWarranties.length}</div>
           <p className="text-[9px] text-slate-400 font-bold uppercase mt-2">De um total de {warranties.length}</p>
         </Card>

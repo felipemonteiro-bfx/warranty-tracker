@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText, Siren, Hammer, ArrowUpRight, TrendingUp, Scan, Camera, MapPin, Megaphone, ShoppingCart, Tag, BadgeCheck, Zap, Languages, Timer, BarChart3, ListChecks, MessageSquare, ThumbsUp, ThumbsDown, Share2 } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText, Siren, Hammer, ArrowUpRight, TrendingUp, Scan, Camera, MapPin, Megaphone, ShoppingCart, Tag, BadgeCheck, Zap, Languages, Timer, BarChart3, ListChecks, MessageSquare, ThumbsUp, ThumbsDown, Share2, Calculator, Wallet } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining, generateICalLink } from '@/lib/utils/date-utils';
 import Link from 'next/navigation';
 import { notFound, useRouter } from 'next/navigation';
@@ -17,9 +17,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [writingAd, setWritingAd] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-  const [generatedAd, setGeneratedAd] = useState<any>(null);
+  const [analyzingROI, setAnalyzingROI] = useState(false);
+  const [roiData, setRoiData] = useState<any>(null);
   const [warranty, setWarranty] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
@@ -43,44 +42,27 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setLoading(false);
   };
 
-  const generateAdCopy = async () => {
-    setWritingAd(true);
-    try {
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      const logSummary = logs.map(l => `- ${l.description} em ${formatDate(l.date)}`).join('\n');
-      const prompt = `Crie um anúncio de venda premium para: ${warranty.name}.
-      Use estes diferenciais:
-      - Nota Fiscal disponível
-      - Histórico de manutenção:\n${logSummary || 'Item muito bem conservado'}
-      - Selo de integridade digital do Guardião de Notas.
-      Retorne em JSON: { "title": "título", "description": "descrição", "price": ${warranty.price * 0.8} }`;
-
-      const result = await model.generateContent(prompt);
-      const data = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
-      setGeneratedAd(data);
-      toast.success('Anúncio estratégico gerado!');
-    } catch (err) { toast.error('Erro na IA de Vendas.'); } finally { setWritingAd(false); }
-  };
-
-  const handlePublishListing = async () => {
-    setPublishing(true);
-    try {
-      const { error } = await supabase.from('marketplace_listings').insert({
-        warranty_id: id,
-        user_id: profile.id,
-        listing_price: generatedAd.price,
-        description: generatedAd.description
+  const calculateRealROI = () => {
+    setAnalyzingROI(true);
+    setTimeout(() => {
+      const pricePaid = Number(warranty.price || 0);
+      const totalMaintenance = logs.reduce((acc, curr) => acc + Number(curr.cost), 0);
+      const inflationFactor = 1.12; // Simulação de 12% de inflação no período
+      const purchasePriceCorrected = pricePaid * inflationFactor;
+      
+      const estimatedResale = pricePaid * 0.85; // Estimativa simples para o exemplo
+      const netGain = estimatedResale - (purchasePriceCorrected + totalMaintenance);
+      
+      setRoiData({
+        netGain,
+        purchasePriceCorrected,
+        totalMaintenance,
+        estimatedResale,
+        roiPercent: ((estimatedResale / (pricePaid + totalMaintenance)) - 1) * 100
       });
-      if (error) throw error;
-      toast.success('Seu item agora está visível no Marketplace do Guardião!');
-      router.push('/marketplace');
-    } catch (err) {
-      toast.error('Erro ao publicar anúncio.');
-    } finally {
-      setPublishing(false);
-    }
+      setAnalyzingROI(false);
+      toast.success('Análise de ROI concluída!');
+    }, 1500);
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-emerald-600" /></div>;
@@ -91,7 +73,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="flex justify-between items-center">
         <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 font-bold hover:text-emerald-600 transition-all"><ArrowLeft className="h-4 w-4" /> Voltar</button>
         <div className="flex gap-2">
-          <Link href={`/products/edit/${warranty.id}`}><Button variant="outline" size="sm" className="gap-2 border-teal-100 font-bold">Editar Ativo</Button></Link>
+          <Link href={`/products/edit/${warranty.id}`}><Button variant="outline" size="sm" className="gap-2 border-teal-100 font-bold uppercase text-[10px] tracking-widest">Editar</Button></Link>
         </div>
       </div>
 
@@ -103,51 +85,56 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-10">
           
-          {/* Módulo de Venda Real (Feature 2) */}
-          <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden group">
-            <div className="h-1.5 w-full bg-emerald-600" />
-            <CardContent className="p-10">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="flex items-center gap-6">
-                  <div className="h-16 w-16 rounded-[24px] bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 shadow-sm"><Megaphone className="h-8 w-8" /></div>
-                  <div className="space-y-1">
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Vender no Marketplace</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-xs">Anuncie para a comunidade do Guardião com garantia de procedência.</p>
-                  </div>
+          {/* NOVO: Calculadora de Lucro Real na Revenda (Feature 2) */}
+          <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden relative group">
+            <div className="h-1.5 w-full bg-emerald-500" />
+            <CardHeader className="p-10 pb-0">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-emerald-600 font-black text-[10px] uppercase tracking-[0.2em]"><Calculator className="h-4 w-4" /> Resale Analytics</div>
+                  <CardTitle className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Análise de Lucro Real</CardTitle>
                 </div>
-                <Button 
-                  onClick={generateAdCopy} 
-                  disabled={writingAd}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-14 px-10 rounded-2xl gap-2 shadow-xl shadow-emerald-500/20"
-                >
-                  {writingAd ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {writingAd ? 'Gerando Anúncio...' : 'Preparar Venda IA'}
-                </Button>
+                {!roiData && (
+                  <Button 
+                    onClick={calculateRealROI} 
+                    disabled={analyzingROI}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-12 px-6 rounded-xl shadow-lg shadow-emerald-500/20 gap-2"
+                  >
+                    {analyzingROI ? <Loader2 className="h-4 w-4 animate-spin" /> : <TrendingUp className="h-4 w-4" />}
+                    Calcular ROI
+                  </Button>
+                )}
               </div>
-
-              <AnimatePresence>
-                {generatedAd && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-10 p-8 bg-slate-50 dark:bg-white/5 rounded-[32px] border border-slate-100 dark:border-white/5 space-y-6 overflow-hidden">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-black text-emerald-600 uppercase">Título do Anúncio</p>
-                        <p className="text-lg font-black text-slate-900 dark:text-white">{generatedAd.title}</p>
+            </CardHeader>
+            <CardContent className="p-10 pt-8">
+              <AnimatePresence mode="wait">
+                {!roiData ? (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-10 text-center space-y-4 bg-slate-50 dark:bg-white/5 rounded-[32px] border-2 border-dashed border-slate-100 dark:border-white/5">
+                    <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto">Calculamos o lucro real da sua revenda considerando Inflação, Upgrades e Valor de Nota.</p>
+                  </motion.div>
+                ) : (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl text-center">
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Custo Total</p>
+                        <p className="text-xl font-black text-slate-900 dark:text-white">R$ {(roiData.purchasePriceCorrected + roiData.totalMaintenance).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase">Preço Sugerido</p>
-                        <p className="text-2xl font-black text-emerald-600">R$ {Number(generatedAd.price).toLocaleString('pt-BR')}</p>
+                      <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl text-center">
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Valor Venda</p>
+                        <p className="text-xl font-black text-slate-900 dark:text-white">R$ {roiData.estimatedResale.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
+                      </div>
+                      <div className={`p-6 rounded-3xl text-center ${roiData.netGain >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                        <p className={`text-[10px] font-black uppercase mb-1 ${roiData.netGain >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Ganho Real</p>
+                        <p className={`text-xl font-black ${roiData.netGain >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}>R$ {Math.abs(roiData.netGain).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
+                      </div>
+                      <div className="p-6 bg-slate-900 dark:bg-emerald-600 rounded-3xl text-center">
+                        <p className="text-[10px] font-black text-emerald-400 dark:text-white uppercase mb-1">ROI Final</p>
+                        <p className="text-xl font-black text-white">{roiData.roiPercent.toFixed(1)}%</p>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-slate-400 uppercase">Descrição Baseada em Auditoria</p>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">{generatedAd.description}</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button onClick={handlePublishListing} disabled={publishing} className="flex-1 h-14 bg-slate-900 text-white gap-2 font-black uppercase text-xs tracking-widest">
-                        {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-                        Publicar no Marketplace
-                      </Button>
-                      <Button variant="outline" className="flex-1 h-14 border-slate-200" onClick={() => setGeneratedAd(null)}>Cancelar</Button>
+                    <div className="p-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-[32px] border border-emerald-100 dark:border-emerald-500/20 flex items-start gap-4">
+                      <Zap className="h-6 w-6 text-emerald-600 shrink-0" />
+                      <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200 leading-relaxed italic">"Dica IA: Seus upgrades valorizaram este bem acima da média. O momento ideal de venda é em até 6 meses para maximizar o retorno de capital."</p>
                     </div>
                   </motion.div>
                 )}
@@ -156,12 +143,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </Card>
 
           <Card className="border-none shadow-xl bg-white dark:bg-slate-900 p-8">
-            <CardHeader className="p-0 mb-8"><CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><History className="h-5 w-5 text-emerald-600" /> Log de Auditoria</CardTitle></CardHeader>
+            <CardHeader className="p-0 mb-8"><CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><History className="h-5 w-5 text-emerald-600" /> Log de Vida</CardTitle></CardHeader>
             <div className="space-y-6">
               {logs.map((log, i) => (
                 <div key={i} className="flex gap-4 items-start group">
                   <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0"><CheckCircle2 className="h-4 w-4" /></div>
-                  <div className="pt-1"><p className="text-sm font-black text-slate-900 dark:text-slate-200">{log.description}</p><p className="text-[10px] font-bold text-slate-400 uppercase">{formatDate(log.date)}</p></div>
+                  <div className="pt-1"><p className="text-sm font-black text-slate-900 dark:text-slate-200">{log.description}</p><p className="text-[10px] font-bold text-slate-400 uppercase">{formatDate(log.date)} • R$ {Number(log.cost).toLocaleString('pt-BR')}</p></div>
                 </div>
               ))}
             </div>
@@ -169,16 +156,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-slate-900 text-white border-none p-10 relative overflow-hidden group shadow-2xl text-center">
-            <div className="h-24 w-24 rounded-[40px] bg-emerald-500/10 flex items-center justify-center mx-auto mb-6 border-2 border-emerald-500/30">
-              <ShieldCheck className="h-12 w-12 text-emerald-500" />
-            </div>
-            <h4 className="text-2xl font-black uppercase tracking-tighter">Status: Auditado</h4>
-            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mt-1">Integridade Digital Verificada</p>
+          <Card className="bg-slate-900 text-white border-none p-8 relative overflow-hidden shadow-2xl">
+            <TrendingDown className="h-8 w-8 text-emerald-400 mb-4" /><p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Patrimônio Líquido</p>
+            <div className="text-4xl font-black text-white mt-1">R$ {(Number(warranty.price || 0) * 0.85).toLocaleString('pt-BR')}</div>
+            <p className="text-[9px] text-emerald-500 mt-4 italic flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Auditado pelo Guardião</p>
           </Card>
+          
           <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">
-            <TrendingUp className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Proteção</h4><p className="text-xs font-medium text-emerald-100 leading-relaxed">Este bem está documentado e auditado pelo Guardião. Gere dossiês para sinistros ou vendas rápidas.</p>
-            <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Baixar Dossiê Master</Button>
+            <ShieldCheck className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Certificado Digital</h4><p className="text-xs font-medium text-emerald-100">Gere um documento de autenticidade reconhecido para venda ou seguro.</p>
+            <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Emitir Certificado</Button>
           </div>
         </div>
       </div>

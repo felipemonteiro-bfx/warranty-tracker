@@ -13,24 +13,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const logoUrl = "https://lh3.googleusercontent.com/gg-dl/AOI_d_9yfHBtXafzC8T3snFo7GdIXq6HQDLrt7Z5UxvjYWabsrwlj0P8aBncqzU2Ovv-1swtO5xi4N4ASTShjz3534eDjmZkVM-5XpKtkgZOgKZCfKpV3R-f4L2vd4ROx6xEZznyzv0oVwwV508ew19R7APwkVR_qqSSXJtDnNWguraFqE-xLQ=s1024-rj";
-
 export const metadata: Metadata = {
-  title: "Guardião de Notas | Inteligência em Garantias",
-  description: "O guardião inteligente para suas notas fiscais e garantias.",
-  icons: {
-    icon: logoUrl,
-    apple: logoUrl,
-  },
+  title: "Guardião de Notas - Gestão Patrimonial IA",
+  description: "O seu consultor inteligente de garantias, seguros e patrimônio durável.",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Guardião",
   },
-  manifest: "/manifest.json",
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
+  themeColor: "#059669",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -43,10 +41,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="pt-BR" className="light" style={{ colorScheme: 'light' }}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         {children}
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

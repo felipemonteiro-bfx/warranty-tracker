@@ -85,6 +85,11 @@ export const Navbar = () => {
               <Users className="h-4 w-4 text-emerald-600" /> Família
             </Button>
           </Link>
+          <Link href="/vault" className="hidden md:block">
+            <Button variant="ghost" size="sm" className="gap-2 font-bold text-slate-600">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" /> Meu Cofre
+            </Button>
+          </Link>
           <Link href="/support" className="hidden md:block">
             <Button variant="ghost" size="sm" className="gap-2 font-bold text-slate-600">
               <Scale className="h-4 w-4 text-emerald-600" /> Suporte

@@ -10,12 +10,14 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ThemeToggle } from './ThemeToggle';
 import { useDisguise } from './DisguiseProvider';
+import { usePanic } from './PanicProvider';
 
 export const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
   const { toggleDisguise } = useDisguise();
+  const { togglePanic } = usePanic();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);

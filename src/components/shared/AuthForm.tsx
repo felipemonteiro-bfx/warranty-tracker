@@ -2,158 +2,135 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { LogIn, UserPlus, Loader2, Mail, Phone, MapPin } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Mail, Lock, Loader2, ArrowRight, Chrome, Github, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
-interface AuthFormProps {
-  mode: 'login' | 'signup';
-}
-
-export const AuthForm = ({ mode }: AuthFormProps) => {
+export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [socialLoading, setSocialLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleGoogleLogin = async () => {
+    setSocialLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error('Erro ao conectar com Google: ' + err.message);
+      setSocialLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
     try {
-      if (mode === 'signup') {
+      if (type === 'signup') {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { 
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-            data: {
-              full_name: fullName,
-              cpf: cpf,
-              birth_date: birthDate
-            }
-          },
+          options: { data: { full_name: fullName } },
         });
         if (error) throw error;
-        toast.success('Verifique seu e-mail para confirmar o cadastro!');
+        toast.success('Conta criada! Verifique seu e-mail.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success('Bem-vindo de volta!');
         router.push('/dashboard');
         router.refresh();
       }
     } catch (err: any) {
-      const message = err.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos' : err.message;
-      setError(message);
-      toast.error(message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8">
-      <motion.form 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        onSubmit={handleAuth} 
-        className="space-y-4 w-full"
-      >
-        {mode === 'signup' && (
-          <>
-            <Input
-              label="Nome Completo"
-              placeholder="Digite seu nome"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="CPF"
-                placeholder="000.000.000-00"
-                value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
-                required
-              />
-              <Input
-                label="Data de Nascimento"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                required
-              />
-            </div>
-          </>
-        )}
+    <Card className="w-full max-w-md border-none shadow-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[40px] overflow-hidden">
+      <div className="h-2 w-full bg-emerald-600" />
+      <CardHeader className="pt-10 pb-6 text-center space-y-2">
+        <CardTitle className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">
+          {type === 'login' ? 'Bem-vindo de Volta' : 'Criar Conta Elite'}
+        </CardTitle>
+        <p className="text-sm text-slate-500 font-medium">Proteja seu patrimônio com inteligência.</p>
+      </CardHeader>
+      <CardContent className="px-10 pb-12 space-y-8">
         
-        <Input
-          label="E-mail"
-          type="email"
-          placeholder="exemplo@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          label="Senha"
-          type="password"
-          placeholder="Sua senha secreta"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold"
+        {/* Login Social */}
+        <div className="space-y-3">
+          <Button 
+            onClick={handleGoogleLogin} 
+            disabled={socialLoading}
+            variant="outline" 
+            className="w-full h-14 rounded-2xl border-2 border-slate-100 dark:border-white/5 font-bold gap-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
           >
-            {error}
-          </motion.div>
-        )}
-
-        <Button type="submit" className="w-full py-4 text-lg" disabled={loading}>
-          {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : mode === 'login' ? (
-            <span className="flex items-center gap-2">Entrar na Conta <LogIn className="h-5 w-5" /></span>
-          ) : (
-            <span className="flex items-center gap-2">Criar minha Conta <UserPlus className="h-5 w-5" /></span>
-          )}
-        </Button>
-      </motion.form>
-
-      {/* Seção Fale Conosco */}
-      <div className="pt-8 border-t border-teal-100">
-        <h4 className="text-sm font-black text-teal-800 uppercase tracking-widest mb-4 text-center">Fale Conosco</h4>
-        <div className="grid grid-cols-1 gap-4 text-xs font-medium text-slate-500">
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-teal-50">
-            <Mail className="h-4 w-4 text-emerald-600" />
-            <span>suporte@guardiaonotas.com.br</span>
-          </div>
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-teal-50">
-            <Phone className="h-4 w-4 text-emerald-600" />
-            <span>(11) 9999-9999</span>
-          </div>
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-teal-50">
-            <MapPin className="h-4 w-4 text-emerald-600" />
-            <span>Av. Paulista, 1000 - São Paulo, SP</span>
-          </div>
+            {socialLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Chrome className="h-5 w-5 text-red-500" />}
+            Continuar com Google
+          </Button>
         </div>
-      </div>
-    </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100 dark:border-white/5" /></div>
+          <div className="relative flex justify-center text-[10px] font-black uppercase"><span className="bg-white dark:bg-slate-900 px-4 text-slate-400">Ou use seu e-mail</span></div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {type === 'signup' && (
+            <Input 
+              label="Nome Completo" 
+              placeholder="Ex: Felipe Monteiro" 
+              value={fullName} 
+              onChange={(e) => setFullName(e.target.value)} 
+              required 
+            />
+          )}
+          <Input 
+            label="E-mail" 
+            type="email" 
+            placeholder="seu@email.com" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+          />
+          <Input 
+            label="Senha" 
+            type="password" 
+            placeholder="••••••••" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
+          
+          <Button type="submit" disabled={loading} className="w-full h-16 rounded-[24px] text-lg font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 group">
+            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (type === 'login' ? 'Entrar no Sistema' : 'Finalizar Cadastro')}
+            {!loading && <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-all" />}
+          </Button>
+        </form>
+
+        <footer className="text-center pt-4">
+          <p className="text-xs text-slate-500 font-medium">
+            {type === 'login' ? 'Ainda não tem conta?' : 'Já possui cadastro?'}
+            <Link href={type === 'login' ? '/signup' : '/login'} className="ml-2 text-emerald-600 font-black uppercase hover:underline">
+              {type === 'login' ? 'Criar agora' : 'Fazer Login'}
+            </Link>
+          </p>
+        </footer>
+      </CardContent>
+    </Card>
   );
 };

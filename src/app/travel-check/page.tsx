@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Plane, ShieldCheck, FileDown, ArrowLeft, Loader2, CheckCircle2, QrCode, Smartphone, Camera, Laptop, Watch } from 'lucide-react';
+import { Plane, ShieldCheck, FileDown, ArrowLeft, Loader2, CheckCircle2, QrCode, Smartphone, Camera, Laptop, Watch, Languages } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +17,7 @@ export default function TravelModePage() {
   const [warranties, setWarranties] = useState<any[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [lang, setLang] = useState<'pt' | 'en' | 'es'>('pt');
   const supabase = createClient();
 
   useEffect(() => {
@@ -34,110 +35,102 @@ export default function TravelModePage() {
     setLoading(false);
   };
 
-  const toggleItem = (id: string) => {
-    setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
   const generateCustomsPDF = () => {
     if (selectedItems.length === 0) {
-      toast.error('Selecione ao menos um item para a mala.');
+      toast.error('Selecione itens para a mala.');
       return;
     }
     const doc = new jsPDF();
     const itemsToExport = warranties.filter(w => selectedItems.includes(w.id));
 
-    doc.setFontSize(20); doc.setTextColor(15, 23, 42); doc.text('Declaração de Bens em Viagem Internacional', 14, 20);
-    doc.setFontSize(10); doc.setTextColor(100);
-    doc.text(`Proprietário: ${profile?.full_name || '---'} | CPF: ${profile?.cpf || '---'}`, 14, 28);
-    doc.text('Documento auxiliar para comprovação de procedência perante a Receita Federal.', 14, 33);
+    const t = {
+      pt: { title: 'Declaração de Bens para Alfândega', head: ['Item', 'S/N (Serial)', 'Valor', 'Data Compra', 'Loja'], sub: 'Documento auxiliar para comprovação de procedência.' },
+      en: { title: 'Customs Asset Declaration', head: ['Asset', 'Serial Number', 'Value', 'Purchase Date', 'Source'], sub: 'Auxiliary document for proof of ownership and provenance.' },
+      es: { title: 'Declaración de Bienes para Aduana', head: ['Bien', 'Número de Serie', 'Valor', 'Fecha de Compra', 'Origen'], sub: 'Documento auxiliar para la prueba de propiedad y origen.' }
+    };
+
+    const current = t[lang];
+
+    doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 45, 'F');
+    doc.setFontSize(20); doc.setTextColor(255, 255, 255); doc.text(current.title.toUpperCase(), 14, 25);
+    doc.setFontSize(10); doc.text(current.sub, 14, 35);
+
+    doc.setTextColor(15, 23, 42); doc.text(`Owner: ${profile?.full_name} | Document: ${profile?.cpf || '---'}`, 14, 60);
 
     const tableData = itemsToExport.map(w => [
       w.name,
-      w.serial_number || 'Não informado',
+      w.serial_number || '---',
       `R$ ${Number(w.price).toLocaleString('pt-BR')}`,
       formatDate(w.purchase_date),
       w.store || '---'
     ]);
 
     autoTable(doc, {
-      startY: 40,
-      head: [['Item', 'Número de Série (S/N)', 'Valor Pago', 'Data Compra', 'Loja']],
+      startY: 65,
+      head: [current.head],
       body: tableData,
       headStyles: { fillColor: [5, 150, 105] },
-      theme: 'grid'
+      styles: { fontSize: 9 }
     });
 
-    doc.setFontSize(8);
-    doc.text('Autenticado Digitalmente pelo Sistema Guardião de Notas', 14, (doc as any).lastAutoTable.finalY + 10);
-    
-    doc.save(`declaracao-alfandega-guardiao.pdf`);
-    toast.success('Declaração para alfândega gerada!');
+    doc.save(`customs-declaration-${lang}.pdf`);
+    toast.success(`Declaração em ${lang.toUpperCase()} gerada!`);
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-emerald-600" /></div>;
-
   return (
-    <div className="max-w-5xl mx-auto space-y-10 pb-20 px-4 md:px-0">
+    <div className="max-w-6xl mx-auto space-y-10 pb-20 px-4 md:px-0">
       <header className="flex flex-col md:flex-row justify-between items-start gap-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard"><Button variant="ghost" size="sm" className="p-0 h-8 w-8 rounded-full hover:bg-emerald-50"><ArrowLeft className="h-5 w-5 text-emerald-600" /></Button></Link>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">Modo <span className="text-emerald-600">Viagem</span></h1>
-          </div>
-          <p className="text-slate-500 font-medium ml-11">Prepare sua mala e evite problemas com a alfândega brasileira.</p>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase tracking-tighter">Modo <span className="text-emerald-600">Viagem 2.0</span></h1>
+          <p className="text-slate-500 font-medium">Documentação bilíngue para viagens internacionais.</p>
         </div>
-        <Button onClick={generateCustomsPDF} className="gap-2 h-14 px-8 font-black uppercase text-xs tracking-widest shadow-2xl shadow-emerald-200">
-          <FileDown className="h-5 w-5" /> Gerar Guia Alfândega
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <select 
+            value={lang}
+            onChange={(e) => setLang(e.target.value as any)}
+            className="h-14 px-6 bg-white dark:bg-slate-900 border-2 border-teal-50 dark:border-white/5 rounded-2xl text-sm font-black uppercase focus:outline-none focus:border-emerald-500"
+          >
+            <option value="pt">Português (BR)</option>
+            <option value="en">English (US)</option>
+            <option value="es">Español (ES)</option>
+          </select>
+          <Button onClick={generateCustomsPDF} className="h-14 px-10 gap-2 font-black uppercase text-xs tracking-widest shadow-2xl shadow-emerald-500/20">
+            <FileDown className="h-5 w-5" /> Exportar Guia Alfândega
+          </Button>
+        </div>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {warranties.map((w) => (
-              <motion.div 
-                key={w.id} 
-                whileTap={{ scale: 0.98 }}
-                onClick={() => toggleItem(w.id)}
-                className={`p-6 rounded-[32px] border-2 cursor-pointer transition-all ${selectedItems.includes(w.id) ? 'bg-emerald-50 border-emerald-500 shadow-lg shadow-emerald-100' : 'bg-white border-teal-50 hover:border-emerald-200'}`}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${selectedItems.includes(w.id) ? 'bg-emerald-600 text-white' : 'bg-slate-50 text-slate-400'}`}>
-                    {w.category?.toLowerCase().includes('celular') ? <Smartphone className="h-6 w-6" /> : 
-                     w.category?.toLowerCase().includes('foto') ? <Camera className="h-6 w-6" /> :
-                     w.category?.toLowerCase().includes('note') ? <Laptop className="h-6 w-6" /> :
-                     <Watch className="h-6 w-6" />}
-                  </div>
-                  {selectedItems.includes(w.id) && <CheckCircle2 className="h-6 w-6 text-emerald-600" />}
-                </div>
-                <h3 className="font-black text-slate-900 uppercase tracking-tighter line-clamp-1">{w.name}</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">S/N: {w.serial_number || 'Não registrado'}</p>
-              </motion.div>
-            ))}
-          </div>
+        <div className="lg:col-span-2 grid gap-4 sm:grid-cols-2 h-fit">
+          {warranties.map((w) => (
+            <motion.div 
+              key={w.id} 
+              onClick={() => setSelectedItems(prev => prev.includes(w.id) ? prev.filter(i => i !== w.id) : [...prev, w.id])}
+              className={`p-6 rounded-[32px] border-2 cursor-pointer transition-all ${selectedItems.includes(w.id) ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500 shadow-xl' : 'bg-white dark:bg-slate-900 border-teal-50 dark:border-white/5'}`}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${selectedItems.includes(w.id) ? 'bg-emerald-600 text-white' : 'bg-slate-50 dark:bg-white/5 text-slate-400'}`}><Smartphone className="h-6 w-6" /></div>
+                {selectedItems.includes(w.id) && <CheckCircle2 className="h-6 w-6 text-emerald-600" />}
+              </div>
+              <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate">{w.name}</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">S/N: {w.serial_number || 'REGISTRADO'}</p>
+            </motion.div>
+          ))}
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-slate-900 text-white border-none p-8 relative overflow-hidden shadow-2xl">
-            <div className="absolute right-0 top-0 p-8 opacity-10"><Plane className="h-32 w-32 text-white rotate-12" /></div>
+          <Card className="bg-slate-900 text-white border-none p-10 relative overflow-hidden shadow-2xl group">
+            <div className="absolute right-[-20px] top-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-1000"><Globe className="h-48 w-48 text-emerald-500" /></div>
             <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-2 text-emerald-400 font-black text-[10px] uppercase tracking-widest">
-                <ShieldCheck className="h-4 w-4" /> Checklist de Viagem
-              </div>
-              <h3 className="text-2xl font-black leading-tight">Sua mala está com <span className="text-emerald-400">{selectedItems.length}</span> itens.</h3>
-              <p className="text-slate-400 text-sm font-medium leading-relaxed">Levar a nota fiscal e o número de série registrado é a única forma de não pagar imposto ao trazer seus bens de volta para casa.</p>
+              <div className="flex items-center gap-2 text-emerald-400 font-black text-[10px] uppercase tracking-widest"><Languages className="h-4 w-4" /> Global Traveler</div>
+              <h3 className="text-2xl font-black leading-tight uppercase tracking-tighter">Prepare-se para o <span className="text-emerald-400">Exterior.</span></h3>
+              <p className="text-slate-400 text-sm font-medium leading-relaxed">Levar a prova de propriedade em Inglês evita barreiras de comunicação com autoridades alfandegárias no exterior.</p>
               <div className="pt-6 border-t border-white/5">
                 <p className="text-[10px] font-black uppercase text-slate-500">Valor Protegido na Mala</p>
                 <p className="text-3xl font-black text-white mt-1">R$ {warranties.filter(w => selectedItems.includes(w.id)).reduce((acc, curr) => acc + Number(curr.price), 0).toLocaleString('pt-BR')}</p>
               </div>
             </div>
           </Card>
-
-          <div className="p-8 rounded-[40px] bg-emerald-50 border-2 border-emerald-100 space-y-4">
-            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm"><QrCode className="h-6 w-6" /></div>
-            <h4 className="text-lg font-black text-slate-900">QR Code na Mala</h4>
-            <p className="text-xs font-medium text-slate-600 leading-relaxed">Dica Pro: Imprima pequenas etiquetas com QR Code do Guardião para colar nos seus equipamentos. Facilita a auditoria rápida na Receita.</p>
-          </div>
         </div>
       </div>
     </div>

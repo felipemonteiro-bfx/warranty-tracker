@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { BottomNav } from "@/components/shared/BottomNav";
 import { CommandPalette } from "@/components/shared/CommandPalette";
 import DisguiseProvider from "@/components/shared/DisguiseProvider";
+import { OnboardingTour } from "@/components/shared/OnboardingTour";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <DisguiseProvider>
           <CommandPalette />
+          <OnboardingTour />
           {children}
           <BottomNav />
           <Toaster position="top-center" richColors />

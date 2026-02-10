@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { WarrantyCard } from '@/components/warranties/WarrantyCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Package, AlertCircle, ShieldCheck, Plus, Search, Filter, Wallet, FileDown, TrendingUp, X, Trophy, Share2, MessageCircle, Clock, BellRing, PieChart as ChartIcon, CheckCircle2, HeartHandshake, FolderOpen, BarChart3, Plane, QrCode, Lock, ArrowDownRight, ArrowUpRight, Calculator, Landmark, CreditCard } from 'lucide-react';
+import { Package, AlertCircle, ShieldCheck, Plus, Search, Filter, Wallet, FileDown, TrendingUp, X, Trophy, Share2, MessageCircle, Clock, BellRing, PieChart as ChartIcon, CheckCircle2, HeartHandshake, FolderOpen, BarChart3, Plane, QrCode, Lock, ArrowDownRight, ArrowUpRight, Calculator, Landmark, CreditCard, Sparkles } from 'lucide-react';
 import { calculateExpirationDate, getDaysRemaining, formatDate } from '@/lib/utils/date-utils';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
@@ -13,12 +13,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { QRCodeSVG } from 'qrcode.react';
 
 export default function DashboardPage() {
   const [warranties, setWarranties] = useState<any[]>([]);
   const [filteredWarranties, setFilteredWarranties] = useState<any[]>([]);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [folders, setFolders] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -38,12 +36,9 @@ export default function DashboardPage() {
     else setGreeting('Boa noite');
   }, []);
 
-  // Efeito de carrossel para os bens
   useEffect(() => {
     if (warranties.length > 1) {
-      const timer = setInterval(() => {
-        setCurrentAssetIndex((prev) => (prev + 1) % warranties.length);
-      }, 5000);
+      const timer = setInterval(() => setCurrentAssetIndex((prev) => (prev + 1) % warranties.length), 5000);
       return () => clearInterval(timer);
     }
   }, [warranties.length]);
@@ -66,8 +61,7 @@ export default function DashboardPage() {
 
   const getDepreciatedValue = (item: any) => {
     const price = Number(item.price || 0);
-    const purchaseDate = new Date(item.purchase_date);
-    const yearsOwned = (new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+    const yearsOwned = (new Date().getTime() - new Date(item.purchase_date).getTime()) / (1000 * 60 * 60 * 24 * 365);
     return price * 0.9 * Math.pow(0.85, yearsOwned);
   };
 
@@ -83,17 +77,13 @@ export default function DashboardPage() {
   }, [selectedCategory, selectedFolder, searchQuery, warranties]);
 
   const totalOriginalValue = filteredWarranties.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
-  const totalDebt = filteredWarranties.reduce((acc, curr) => acc + ((curr.total_installments - curr.paid_installments) * Number(curr.installment_value || 0)), 0);
+  const totalDebt = warranties.reduce((acc, curr) => acc + ((curr.total_installments - curr.paid_installments) * Number(curr.installment_value || 0)), 0);
   const netWorth = totalOriginalValue - totalDebt;
+  const expiredCount = warranties.filter(w => getDaysRemaining(calculateExpirationDate(w.purchase_date, w.warranty_months)) < 0).length;
+  const safetyScore = warranties.length > 0 ? Math.round(((warranties.length - expiredCount) / warranties.length) * 100) : 0;
 
-  const exportPDF = (items = filteredWarranties) => {
-    const doc = new jsPDF();
-    doc.setFontSize(22); doc.setTextColor(5, 150, 105); doc.text('Guardião - Inventário de Bens', 14, 20);
-    const tableData = items.map(w => [w.name, w.store || '---', formatDate(w.purchase_date), `R$ ${Number(w.price || 0).toLocaleString('pt-BR')}`]);
-    autoTable(doc, { startY: 40, head: [['Produto', 'Loja', 'Compra', 'Valor']], body: tableData, headStyles: { fillColor: [5, 150, 105] } });
-    doc.save(`inventario-guardiao.pdf`);
-    toast.success('Dossiê exportado!');
-  };
+  // Itens com parcelas pendentes
+  const itemsWithDebt = warranties.filter(w => w.paid_installments < w.total_installments);
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div></div>;
 
@@ -103,52 +93,36 @@ export default function DashboardPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-4xl font-black tracking-tight text-slate-900">{greeting}, <span className="text-emerald-600">{profile?.full_name?.split(' ')[0] || 'Guardião'}</span>!</h1>
-            {profile?.is_premium && <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-amber-200">Pro</span>}
+            {profile?.is_premium ? <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-amber-200">Pro</span> : <Link href="/plans" className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-slate-200 hover:bg-emerald-600 hover:text-white transition-all">Gratuito</Link>}
           </div>
-          <p className="text-slate-500 font-medium">Seu patrimônio líquido atual é <span className="text-slate-900 font-black">R$ {netWorth.toLocaleString('pt-BR')}</span>.</p>
+          <p className="text-slate-500 font-medium">Patrimônio Líquido: <span className="text-slate-900 font-black">R$ {netWorth.toLocaleString('pt-BR')}</span>.</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={() => exportPDF()} className="gap-2 border-emerald-100 text-emerald-700 font-bold shadow-sm">
-            <FileDown className="h-4 w-4" /> Exportar Inventário
-          </Button>
+        <div className="flex gap-3">
           <Link href="/products/new"><Button size="lg" className="shadow-2xl shadow-emerald-200 font-bold"><Plus className="h-5 w-5 mr-2" /> Nova Nota</Button></Link>
         </div>
       </header>
 
-      {/* Carrossel de Oportunidades de Venda (ROI) */}
-      {warranties.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative group">
-          <div className="bg-slate-900 text-white rounded-[40px] p-8 overflow-hidden relative shadow-2xl">
-            <div className="absolute right-0 top-0 h-full w-1/3 bg-emerald-500/10 -skew-x-12 translate-x-20" />
-            <AnimatePresence mode="wait">
-              <motion.div 
-                key={currentAssetIndex}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10"
-              >
-                <div className="space-y-4 text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-400 font-black text-[10px] uppercase tracking-widest">
-                    <TrendingUp className="h-4 w-4" /> Insight de Patrimônio
-                  </div>
-                  <h3 className="text-3xl font-black leading-tight max-w-lg">
-                    Seu <span className="text-emerald-400">{warranties[currentAssetIndex].name}</span> vale R$ {getDepreciatedValue(warranties[currentAssetIndex]).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} hoje.
-                  </h3>
-                  <p className="text-slate-400 text-sm font-medium">Você sabia? Este bem já desvalorizou {Math.round((1 - (getDepreciatedValue(warranties[currentAssetIndex]) / Number(warranties[currentAssetIndex].price || 1))) * 100)}% desde a compra.</p>
-                </div>
-                <div className="flex gap-4">
-                  <Link href={`/products/${warranties[currentAssetIndex].id}`}>
-                    <Button variant="ghost" className="text-white hover:bg-white/10 font-bold border border-white/10 px-8 h-14 rounded-2xl uppercase text-[10px] tracking-widest">Ver Detalhes</Button>
-                  </Link>
-                  <Button className="bg-emerald-500 hover:bg-emerald-400 font-bold px-8 h-14 rounded-2xl uppercase text-[10px] tracking-widest">Vender Agora</Button>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+      {/* NOVO: Smart AI Summary */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 rounded-[40px] bg-emerald-50 border border-emerald-100 relative overflow-hidden">
+        <div className="absolute top-[-20px] right-[-20px] opacity-10"><Sparkles className="h-40 w-40 text-emerald-600" /></div>
+        <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+          <div className="h-16 w-16 bg-white rounded-2xl flex items-center justify-center text-emerald-600 shadow-xl shadow-emerald-200/50 shrink-0">
+            <Sparkles className="h-8 w-8 animate-pulse" />
           </div>
-        </motion.div>
-      )}
+          <div className="space-y-2 text-center md:text-left">
+            <h3 className="text-xl font-black text-emerald-900 uppercase tracking-tight">Resumo Executivo do Guardião</h3>
+            <p className="text-emerald-800 font-medium leading-relaxed">
+              {warranties.length === 0 ? "O Guardião está pronto para monitorar seus bens. Comece cadastrando sua primeira nota!" : 
+              `Hoje, você possui ${warranties.length} bens sob custódia. ${expiredCount > 0 ? `Atenção: ${expiredCount} garantias já expiraram e precisam de revisão.` : "Todas as suas garantias estão ativas!"} Seu próximo pagamento de R$ ${itemsWithDebt[0]?.installment_value || 0} vence em breve.`}
+            </p>
+          </div>
+          <div className="shrink-0">
+            <Button variant="ghost" className="bg-white text-emerald-700 font-black text-[10px] uppercase tracking-widest px-8 h-12 rounded-2xl shadow-sm">Ver Detalhes IA</Button>
+          </div>
+        </div>
+      </motion.div>
 
+      {/* Widgets Financeiros */}
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2 bg-slate-900 text-white border-none overflow-hidden relative shadow-2xl">
           <CardContent className="p-8 space-y-8 relative z-10">
@@ -177,15 +151,31 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-teal-100 bg-white shadow-xl flex flex-col justify-between p-8">
-          <div className="space-y-4">
-            <div className="p-3 bg-emerald-50 rounded-2xl w-fit text-emerald-600"><TrendingUp className="h-6 w-6" /></div>
-            <h3 className="text-xl font-black text-slate-900 leading-tight">Insight Patrimonial</h3>
-            <p className="text-sm text-slate-500 font-medium leading-relaxed">
-              Você tem um investimento acumulado de R$ {totalOriginalValue.toLocaleString('pt-BR')} em bens duráveis. O Guardião protege este capital.
-            </p>
+        {/* Alertas de Pagamento */}
+        <Card className="border-none shadow-xl bg-white flex flex-col p-8 overflow-hidden">
+          <CardHeader className="p-0 mb-6">
+            <CardTitle className="text-xs font-black uppercase text-slate-400 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-emerald-600" /> Próximos Pagamentos
+            </CardTitle>
+          </CardHeader>
+          <div className="space-y-4 flex-1">
+            {itemsWithDebt.length === 0 ? (
+              <div className="text-center py-8 text-slate-300 font-bold uppercase text-[10px]">Tudo Quitado!</div>
+            ) : (
+              itemsWithDebt.slice(0, 2).map(item => (
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-slate-900 uppercase truncate max-w-[120px]">{item.name}</p>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase">{item.paid_installments + 1}ª de {item.total_installments}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-black text-emerald-600">R$ {Number(item.installment_value).toLocaleString('pt-BR')}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          <Button variant="ghost" className="w-full text-emerald-600 font-black text-[10px] uppercase tracking-widest mt-6">Análise de Investimento</Button>
+          <Button variant="ghost" className="w-full text-emerald-600 font-black text-[10px] uppercase tracking-widest mt-6 border-t border-slate-50 pt-4">Ver Fluxo de Caixa</Button>
         </Card>
       </div>
 
@@ -201,8 +191,7 @@ export default function DashboardPage() {
       </div>
 
       <AnimatePresence mode="popLayout"><motion.div layout className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {filteredWarranties.map((w) => (<div key={w.id} className="relative group"><button onClick={() => toast.info('Seleção rápida disponível no Modo de Viagem.')} className={`absolute -top-2 -left-2 z-20 h-6 w-6 rounded-full border-2 bg-white border-slate-200 opacity-0 group-hover:opacity-100 transition-all`} />
-        <WarrantyCard warranty={w} /></div>))}
+        {filteredWarranties.map((w) => (<div key={w.id} className="relative group"><WarrantyCard warranty={w} /></div>))}
       </motion.div></AnimatePresence>
     </div>
   );

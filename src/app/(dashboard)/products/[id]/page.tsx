@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, QrCode, Printer } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining, generateICalLink } from '@/lib/utils/date-utils';
 import Link from 'next/link';
 import { notFound, useRouter } from 'next/navigation';
@@ -48,6 +48,43 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setLoading(false);
   };
 
+  const generateQRCodeLabel = () => {
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: [80, 50] // Tamanho de etiqueta padrão
+    });
+
+    const shareUrl = `${window.location.origin}/share/${warranty.id}`;
+    
+    // Background e Borda
+    doc.setDrawColor(5, 150, 105);
+    doc.setLineWidth(1);
+    doc.rect(2, 2, 76, 46);
+
+    // Título
+    doc.setFontSize(10);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text('GUARDIÃO DE NOTAS', 40, 10, { align: 'center' });
+
+    // Nome do Produto
+    doc.setFontSize(8);
+    doc.text(warranty.name.toUpperCase(), 40, 15, { align: 'center' });
+
+    // QR Code (Usando uma biblioteca de QR online para o PDF por simplicidade no cliente)
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+    doc.addImage(qrUrl, 'PNG', 27, 18, 25, 25);
+
+    // Rodapé da Etiqueta
+    doc.setFontSize(6);
+    doc.setTextColor(100);
+    doc.text('Escaneie para ver a Nota Fiscal e Garantia', 40, 46, { align: 'center' });
+
+    doc.save(`etiqueta-${warranty.name}.pdf`);
+    toast.success('Etiqueta pronta para impressão!');
+  };
+
   const calculateNextMaintenance = () => {
     if (!warranty.last_maintenance_date && !warranty.purchase_date) return null;
     const baseDate = warranty.last_maintenance_date ? parseISO(warranty.last_maintenance_date) : parseISO(warranty.purchase_date);
@@ -75,7 +112,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4 md:px-0">
-      <Link href="/dashboard"><Button variant="ghost" size="sm" className="gap-2 text-slate-500 font-bold mb-4"><ArrowLeft className="h-4 w-4" /> Painel Geral</Button></Link>
+      <div className="flex justify-between items-center">
+        <Link href="/dashboard"><Button variant="ghost" size="sm" className="gap-2 text-slate-500 font-bold"><ArrowLeft className="h-4 w-4" /> Painel Geral</Button></Link>
+        <Button onClick={generateQRCodeLabel} variant="outline" size="sm" className="gap-2 border-emerald-100 text-emerald-700 font-bold">
+          <Printer className="h-4 w-4" /> Imprimir Etiqueta QR
+        </Button>
+      </div>
 
       <header className="flex flex-col md:flex-row justify-between items-start gap-6">
         <div className="space-y-2">
@@ -89,26 +131,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
-          {/* Card de Dados Fiscais (NF-e) */}
+          {/* Card de Dados Fiscais */}
           {warranty.nfe_key && (
-            <Card className="border-none shadow-xl bg-white overflow-hidden">
+            <Card className="border-none shadow-xl bg-white overflow-hidden group">
               <CardHeader className="bg-slate-50 border-b border-slate-100 p-6 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2">
-                  <Key className="h-4 w-4 text-emerald-600" /> Dados Fiscais (NF-e)
-                </CardTitle>
-                <a 
-                  href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7Phu+8Kpgvw=`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[10px] font-black text-emerald-600 uppercase flex items-center gap-1 hover:underline"
-                >
-                  Consultar no Portal <Globe className="h-3 w-3" />
-                </a>
+                <CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><Key className="h-4 w-4 text-emerald-600" /> Dados Fiscais (NF-e)</CardTitle>
+                <a href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7Phu+8Kpgvw=`} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-emerald-600 uppercase flex items-center gap-1 hover:underline">Portal Sefaz <Globe className="h-3 w-3" /></a>
               </CardHeader>
               <CardContent className="p-6">
-                <p className="text-xs font-mono text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100 break-all text-center tracking-widest">
-                  {warranty.nfe_key}
-                </p>
+                <p className="text-xs font-mono text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100 break-all text-center tracking-widest">{warranty.nfe_key}</p>
               </CardContent>
             </Card>
           )}
@@ -118,10 +149,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="flex items-center gap-6">
                 <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isMaintenanceOverdue ? 'bg-amber-100 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}><Wrench className="h-8 w-8" /></div>
-                <div>
-                  <p className="text-xs font-black uppercase text-slate-400">Próxima Revisão</p>
-                  <h3 className="text-2xl font-black text-slate-900">{nextMaintenance ? nextMaintenance.toLocaleDateString('pt-BR') : 'Não agendada'}</h3>
-                </div>
+                <div><p className="text-xs font-black uppercase text-slate-400">Próxima Revisão</p><h3 className="text-2xl font-black text-slate-900">{nextMaintenance ? nextMaintenance.toLocaleDateString('pt-BR') : 'Não agendada'}</h3></div>
               </div>
               <Button onClick={() => setAddingLog(true)} variant="outline" className="border-teal-100 font-black text-xs">Registrar Manutenção</Button>
             </CardContent>
@@ -132,7 +160,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <CardHeader className="border-b border-slate-50 p-6"><CardTitle className="flex items-center gap-2 text-slate-900"><History className="h-5 w-5 text-emerald-600" /> Histórico de Cuidados</CardTitle></CardHeader>
             <CardContent className="p-6">
               <AnimatePresence>{addingLog && (<motion.form initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} onSubmit={handleAddLog} className="mb-8 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 space-y-4 overflow-hidden"><div className="grid md:grid-cols-2 gap-4"><Input label="O que foi feito?" value={newLog.description} onChange={(e) => setNewLog({...newLog, description: e.target.value})} required /><div className="grid grid-cols-2 gap-4"><Input label="Custo" type="number" value={newLog.cost} onChange={(e) => setNewLog({...newLog, cost: e.target.value})} /><Input label="Data" type="date" value={newLog.date} onChange={(e) => setNewLog({...newLog, date: e.target.value})} required /></div></div><div className="flex gap-2"><Button type="submit" className="flex-1">Salvar</Button><Button variant="ghost" onClick={() => setAddingLog(false)}>Cancelar</Button></div></motion.form>)}</AnimatePresence>
-              <div className="space-y-4">{logs.length === 0 ? <div className="text-center py-8 text-slate-400 italic">Nenhum registro.</div> : logs.map((log) => (<div key={log.id} className="flex items-center justify-between p-4 bg-white border border-teal-50 rounded-2xl group"><div className="flex items-center gap-4"><div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><CheckCircle2 className="h-5 w-5" /></div><div><p className="text-sm font-black text-slate-800">{log.description}</p><p className="text-[10px] font-bold text-slate-400 uppercase">{formatDate(log.date)} • R$ {Number(log.cost).toLocaleString('pt-BR')}</p></div></div></div>))}</div>
+              <div className="space-y-4">{logs.length === 0 ? <div className="text-center py-8 text-slate-400 italic">Nenhum registro.</div> : logs.map((log) => (<div key={log.id} className="flex items-center justify-between p-4 bg-white border border-teal-50 rounded-2xl group"><div className="flex items-center gap-4"><div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><CheckCircle2 className="h-5 w-5" /></div><div><p className="text-sm font-black text-slate-800">{log.description}</p><p className="text-[10px] font-bold text-slate-400 uppercase">{formatDate(log.date)} • R$ {Number(log.cost).toLocaleString('pt-BR')}</p></div></div><button onClick={() => deleteLog(log.id)} className="opacity-0 group-hover:opacity-100 p-2 text-red-400"><Trash2 className="h-4 w-4" /></button></div>))}</div>
             </CardContent>
           </Card>
         </div>

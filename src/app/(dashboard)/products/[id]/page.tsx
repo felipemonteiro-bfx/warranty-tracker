@@ -5,12 +5,14 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining } from '@/lib/utils/date-utils';
 import Link from 'next/link';
 import { notFound, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -19,6 +21,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [addingLog, setAddingLog] = useState(false);
   const [warranty, setWarranty] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [newLog, setNewLog] = useState({ description: '', cost: '', date: new Date().toISOString().split('T')[0] });
   const supabase = createClient();
 
@@ -27,6 +30,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   }, [id]);
 
   const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      setProfile(profileData);
+    }
+
     const { data: warrantyData } = await supabase.from('warranties').select('*').eq('id', id).single();
     if (!warrantyData) return setWarranty(null);
     setWarranty(warrantyData);
@@ -34,6 +43,58 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     const { data: logData } = await supabase.from('maintenance_logs').select('*').eq('warranty_id', id).order('date', { ascending: false });
     setLogs(logData || []);
     setLoading(false);
+  };
+
+  const generateLegalPDF = () => {
+    if (!profile?.is_premium) {
+      toast.error('O Dossiê Jurídico é exclusivo para usuários Pro. Faça o upgrade!');
+      router.push('/plans');
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.setFillColor(15, 23, 42); 
+    doc.rect(0, 0, 210, 50, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('DOSSIÊ JURÍDICO DE RECLAMAÇÃO', 105, 25, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text('Documento Verificado e Auditado por Guardião de Notas', 105, 35, { align: 'center' });
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.text('1. DADOS DO PROPRIETÁRIO', 14, 65);
+    doc.setFontSize(10);
+    doc.text(`Nome: ${profile?.full_name || '---'}`, 14, 75);
+    doc.text(`CPF: ${profile?.cpf || '---'}`, 14, 80);
+
+    doc.setFontSize(14);
+    doc.text('2. DADOS DO PRODUTO', 14, 95);
+    doc.setFontSize(10);
+    doc.text(`Produto: ${warranty.name}`, 14, 105);
+    doc.text(`Loja de Origem: ${warranty.store || '---'}`, 14, 110);
+    doc.text(`Data de Compra: ${formatDate(warranty.purchase_date)}`, 14, 115);
+    doc.text(`Valor Original: R$ ${Number(warranty.price || 0).toLocaleString('pt-BR')}`, 14, 120);
+
+    doc.setFontSize(14);
+    doc.text('3. HISTÓRICO DE MANUTENÇÃO (PROVA DE CUIDADO)', 14, 135);
+    const tableData = logs.map(l => [formatDate(l.date), l.description, `R$ ${Number(l.cost).toLocaleString('pt-BR')}`]);
+    autoTable(doc, {
+      startY: 140,
+      head: [['Data', 'Serviço Realizado', 'Investimento']],
+      body: tableData.length > 0 ? tableData : [['---', 'Nenhuma manutenção registrada', '---']],
+      headStyles: { fillColor: [15, 23, 42] }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text('4. RECOMENDAÇÕES TÉCNICAS (IA)', 14, finalY);
+    doc.setFontSize(10);
+    doc.text(warranty.care_tips || 'Nenhuma dica processada.', 14, finalY + 10, { maxWidth: 180 });
+
+    doc.save(`dossie-juridico-${warranty.name}.pdf`);
+    toast.success('Dossiê Jurídico gerado com sucesso!');
   };
 
   const handleAddLog = async (e: React.FormEvent) => {
@@ -101,7 +162,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
-          {/* Stats Rápidas */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Card className="border-none bg-white shadow-sm p-4"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Pago</p><p className="text-base font-black text-slate-900">R$ {Number(warranty.price || 0).toLocaleString('pt-BR')}</p></Card>
             <Card className="border-none bg-white shadow-sm p-4"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Economia</p><p className="text-base font-black text-pink-600">R$ {Number(warranty.total_saved || 0).toLocaleString('pt-BR')}</p></Card>
@@ -109,7 +169,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <Card className="border-none bg-white shadow-sm p-4"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Status</p><p className={`text-base font-black ${isExpired ? 'text-red-600' : 'text-emerald-600'}`}>{isExpired ? 'Expirada' : 'Ativa'}</p></Card>
           </div>
 
-          {/* Diário de Longevidade (Logs) */}
           <Card className="border-none shadow-xl">
             <CardHeader className="border-b border-slate-50 flex flex-row items-center justify-between p-6">
               <CardTitle className="flex items-center gap-2 text-slate-900">
@@ -196,11 +255,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </CardContent>
           </Card>
 
-          <div className="p-8 rounded-[40px] bg-gradient-to-br from-pink-600 to-rose-700 text-white shadow-xl shadow-rose-500/20 space-y-4 relative overflow-hidden">
-            <HeartHandshake className="absolute -right-4 -bottom-4 h-32 w-32 opacity-10 -rotate-12" />
-            <h4 className="text-xl font-black leading-tight">Valorize seu Produto</h4>
-            <p className="text-xs font-medium text-rose-100 leading-relaxed">Geramos um Dossiê de Revenda completo com o histórico de manutenções, provando o valor real do seu bem.</p>
-            <Button variant="ghost" className="w-full bg-white text-rose-700 font-black text-[10px] uppercase tracking-widest py-4">Baixar Certificado de Revenda</Button>
+          <div className="p-8 rounded-[40px] bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl shadow-slate-500/20 space-y-4 relative overflow-hidden">
+            <Scale className="absolute -right-4 -bottom-4 h-32 w-32 opacity-10 -rotate-12" />
+            <div className="flex items-center gap-2">
+              <div className="bg-emerald-500 p-2 rounded-xl"><Scale className="h-5 w-5 text-white" /></div>
+              <h4 className="text-xl font-black leading-tight text-white">Dossiê Jurídico</h4>
+            </div>
+            <p className="text-xs font-medium text-slate-400 leading-relaxed">Gere um documento formal com selo de verificação para apresentar ao Procon ou Pequenas Causas.</p>
+            <Button onClick={generateLegalPDF} variant="ghost" className="w-full bg-white text-slate-900 font-black text-[10px] uppercase tracking-widest py-4">Gerar Dossiê Jurídico</Button>
+            {!profile?.is_premium && <p className="text-[8px] text-center text-amber-400 font-black uppercase tracking-tighter">Recurso Exclusivo Plano Pro</p>}
           </div>
         </div>
       </div>

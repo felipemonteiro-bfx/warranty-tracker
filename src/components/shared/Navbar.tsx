@@ -75,6 +75,7 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-1">
             <Link href="/dashboard"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/dashboard' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><LayoutDashboard className="h-4 w-4" /> Painel</Button></Link>
             <Link href="/vault"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/vault' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><ShieldCheck className="h-4 w-4" /> Cofre</Button></Link>
+            <Link href="/marketplace"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/marketplace' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><ShoppingBag className="h-4 w-4" /> Marketplace</Button></Link>
             <Link href="/analytics"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/analytics' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><BarChart3 className="h-4 w-4" /> Análises</Button></Link>
             
             <div className="relative">

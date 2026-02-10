@@ -118,6 +118,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <p className="text-[9px] text-slate-500 mt-4 italic">Cálculo baseado em auditoria de integridade e tempo de posse.</p>
           </Card>
           
+          <div className="p-8 rounded-[40px] bg-gradient-to-br from-cyan-600 to-blue-700 text-white shadow-xl space-y-4 relative overflow-hidden">
+            <Umbrella className="absolute -right-4 -bottom-4 h-32 w-32 opacity-10" />
+            <h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Proteção</h4>
+            <p className="text-xs font-medium text-cyan-100 leading-relaxed">Não deixe seu patrimônio descoberto. Compare ofertas de grandes seguradoras agora.</p>
+            <div className="space-y-2 pt-2">
+              <Link href={`/insurance/simulator/${warranty.id}`} className="block">
+                <Button variant="ghost" className="w-full bg-white text-cyan-700 font-black text-[10px] uppercase py-4 shadow-lg">Simular Seguro IA</Button>
+              </Link>
+              <Link href={`/insurance/compare/${warranty.id}`} className="block">
+                <Button variant="ghost" className="w-full bg-white/10 text-white font-black text-[10px] uppercase py-4 hover:bg-white/20 border border-white/20">Comparar Ofertas Reais</Button>
+              </Link>
+            </div>
+          </div>
+
           <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">
             <ShieldCheck className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Certificar Bem</h4><p className="text-xs font-medium text-emerald-100 leading-relaxed">Gere um certificado de autenticidade para este produto e valorize-o em até 20% no mercado de usados.</p>
             <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Emitir Certificado Pro</Button>

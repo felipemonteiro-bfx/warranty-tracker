@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, MailSearch, Copy, X } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, MailSearch, Copy, X, SendHorizonal, UserPlus } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining, generateICalLink } from '@/lib/utils/date-utils';
 import Link from 'next/navigation';
 import { notFound, useRouter } from 'next/navigation';
@@ -17,11 +17,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [writingEmail, setWritingEmail] = useState(false);
+  const [transferring, setTransferring] = useState(false);
   const [warranty, setWarranty] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
-  const [generatedEmail, setGeneratedEmail] = useState<string | null>(null);
+  const [transferCode, setTransferCode] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -42,34 +42,27 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setLoading(false);
   };
 
-  const generateClaimEmail = async () => {
+  const handleGenerateTransfer = async () => {
     if (!profile?.is_premium) {
-      toast.error('O Gerador de E-mail IA é exclusivo para membros Pro!');
+      toast.error('Transferência Digital é um recurso Pro!');
       router.push('/plans');
       return;
     }
-    setWritingEmail(true);
+    setTransferring(true);
     try {
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      const logSummary = logs.map(l => `- ${l.description} em ${formatDate(l.date)}`).join('\n');
-      const prompt = `Escreva um e-mail formal de reclamação para o fabricante do produto "${warranty.name}".
-      O produto apresentou defeito. Dados para o e-mail:
-      - Comprado em: ${formatDate(warranty.purchase_date)} na loja ${warranty.store}.
-      - Valor: R$ ${warranty.price}.
-      - Chave NF-e: ${warranty.nfe_key || 'Anexa ao e-mail'}.
-      - Histórico de Cuidado: ${logSummary || 'O produto está em perfeito estado de conservação'}.
-      Baseie-se no Código de Defesa do Consumidor (CDC) exigindo o reparo ou troca conforme o prazo legal. 
-      Assine como ${profile?.full_name || 'Consumidor'}.`;
-
-      const result = await model.generateContent(prompt);
-      setGeneratedEmail(result.response.text());
-      toast.success('E-mail de reclamação gerado pela IA!');
+      const code = `TRF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const { error } = await supabase.from('asset_transfers').insert({
+        warranty_id: id,
+        sender_id: profile.id,
+        transfer_code: code
+      });
+      if (error) throw error;
+      setTransferCode(code);
+      toast.success('Código de transferência gerado!');
     } catch (err) {
-      toast.error('Erro ao gerar e-mail.');
+      toast.error('Erro ao gerar transferência.');
     } finally {
-      setWritingEmail(false);
+      setTransferring(false);
     }
   };
 
@@ -80,33 +73,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4 md:px-0">
       <div className="flex justify-between items-center">
         <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 font-bold hover:text-emerald-600 transition-all"><ArrowLeft className="h-4 w-4" /> Voltar</button>
-        <Link href={`/products/edit/${warranty.id}`}><Button variant="outline" size="sm" className="gap-2 border-teal-100 font-bold text-teal-700">Editar Dados</Button></Link>
+        <div className="flex gap-2">
+          <Link href={`/products/edit/${warranty.id}`}><Button variant="outline" size="sm" className="gap-2 border-teal-100 font-bold text-teal-700">Editar Dados</Button></Link>
+        </div>
       </div>
 
-      {/* Modal de E-mail IA */}
+      {/* Modal de Transferência */}
       <AnimatePresence>
-        {generatedEmail && (
+        {transferCode && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[40px] p-10 max-w-2xl w-full text-left space-y-6 shadow-2xl relative">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600"><MailSearch className="h-5 w-5" /></div>
-                  <h3 className="text-xl font-black text-slate-900">E-mail de Reclamação Pronto</h3>
-                </div>
-                <button onClick={() => setGeneratedEmail(null)} className="p-2 bg-slate-50 rounded-full"><X className="h-5 w-5 text-slate-400" /></button>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-[40px] p-10 max-w-sm w-full text-center space-y-6 shadow-2xl relative">
+              <button onClick={() => setTransferCode(null)} className="absolute top-6 right-6 p-2 bg-slate-50 rounded-full"><X className="h-5 w-5 text-slate-400" /></button>
+              <div className="h-20 w-20 bg-emerald-50 rounded-3xl mx-auto flex items-center justify-center text-emerald-600 shadow-xl shadow-emerald-200/50"><SendHorizonal className="h-10 w-10" /></div>
+              <h3 className="text-2xl font-black text-slate-900">Pronto para Transferir</h3>
+              <p className="text-sm text-slate-500 font-medium">Envie este código ao novo dono. Ele poderá importar todo o histórico e nota fiscal para a conta dele.</p>
+              <div className="p-6 bg-slate-900 rounded-3xl border-4 border-emerald-500/30">
+                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-2">Código Único</p>
+                <p className="text-4xl font-black text-white tracking-widest font-mono">{transferCode}</p>
               </div>
-              <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 max-h-[350px] overflow-y-auto no-scrollbar font-medium text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">
-                {generatedEmail}
-              </div>
-              <div className="flex gap-4">
-                <Button 
-                  onClick={() => { navigator.clipboard.writeText(generatedEmail); toast.success('E-mail copiado!'); }}
-                  className="flex-1 h-14 gap-2 font-black uppercase text-xs tracking-widest"
-                >
-                  <Copy className="h-4 w-4" /> Copiar Texto
-                </Button>
-                <Button variant="outline" onClick={() => setGeneratedEmail(null)} className="flex-1 h-14 font-black uppercase text-xs tracking-widest border-slate-200">Fechar</Button>
-              </div>
+              <Button onClick={() => { navigator.clipboard.writeText(transferCode); toast.success('Código copiado!'); }} className="w-full h-14 gap-2 font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20"><Copy className="h-4 w-4" /> Copiar Código</Button>
             </motion.div>
           </div>
         )}
@@ -119,30 +104,30 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
-          {/* Card de Ação Proativa */}
-          <div className="p-8 rounded-[40px] bg-slate-900 text-white shadow-xl relative overflow-hidden group">
-            <div className="absolute right-[-20px] top-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-700"><Scale className="h-48 w-48 text-white rotate-12" /></div>
-            <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-2 text-emerald-400 font-black text-[10px] uppercase tracking-widest">
-                <Sparkles className="h-4 w-4" /> Inteligência de Suporte
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-3xl font-black">O produto deu <span className="text-red-500">Defeito?</span></h3>
-                <p className="text-slate-400 text-sm font-medium leading-relaxed">Não perca tempo com burocracia. Nossa IA redige o e-mail formal de reclamação perfeito para você enviar ao fabricante agora mesmo.</p>
+          {/* Card de Transferência Patrimonial (Killer Feature) */}
+          <Card className="border-none shadow-xl bg-white overflow-hidden group">
+            <div className="h-2 w-full bg-slate-900" />
+            <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-6">
+                <div className="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all"><UserPlus className="h-8 w-8" /></div>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black text-slate-900">Vendeu este produto?</h3>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed">Transfira a "certidão digital" do bem para o novo dono. Isso aumenta a confiança e o valor da sua venda.</p>
+                </div>
               </div>
               <Button 
-                onClick={generateClaimEmail} 
-                disabled={writingEmail}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-14 px-10 rounded-2xl shadow-xl shadow-emerald-500/20 gap-2"
+                onClick={handleGenerateTransfer} 
+                disabled={transferring}
+                className="bg-slate-900 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-14 px-8 rounded-2xl shrink-0"
               >
-                {writingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailSearch className="h-4 w-4" />}
-                {writingEmail ? 'Redigindo Reclamação...' : 'Gerar E-mail de Reclamação'}
+                {transferring ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <SendHorizonal className="h-4 w-4 mr-2" />}
+                Gerar Transferência
               </Button>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           <Card className="border-none shadow-xl bg-white p-8">
-            <CardHeader className="p-0 mb-8"><CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><History className="h-5 w-5 text-emerald-600" /> Histórico do Bem</CardTitle></CardHeader>
+            <CardHeader className="p-0 mb-8"><CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><History className="h-5 w-5 text-emerald-600" /> Linha do Tempo</CardTitle></CardHeader>
             <div className="space-y-6">
               {logs.map((log, i) => (
                 <div key={i} className="flex gap-4 items-start">
@@ -155,8 +140,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-white border-teal-50 shadow-xl p-8 relative overflow-hidden">
-            <TrendingDown className="h-8 w-8 text-red-100 mb-4" /><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Valor de Mercado</p><div className="text-4xl font-black text-slate-900 mt-1">R$ {(Number(warranty.price || 0) * 0.85).toLocaleString('pt-BR')}</div>
+          <Card className="bg-slate-900 text-white border-none p-8 relative overflow-hidden shadow-2xl group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-1000" />
+            <TrendingDown className="h-8 w-8 text-emerald-400 mb-4" /><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Valor de Revenda</p>
+            <div className="text-4xl font-black text-white mt-1">R$ {(Number(warranty.price || 0) * 0.82).toLocaleString('pt-BR')}</div>
+            <p className="text-[9px] text-emerald-600 font-black uppercase mt-4 flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Auditado pelo Guardião</p>
           </Card>
           
           <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">

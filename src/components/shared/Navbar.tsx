@@ -70,6 +70,11 @@ export const Navbar = () => {
               <LayoutDashboard className="h-4 w-4 text-emerald-600" /> Painel
             </Button>
           </Link>
+          <Link href="/maintenance" className="hidden md:block">
+            <Button variant="ghost" size="sm" className="gap-2 font-bold text-slate-600">
+              <Wrench className="h-4 w-4 text-emerald-600" /> Manutenções
+            </Button>
+          </Link>
           <Link href="/analytics" className="hidden md:block">
             <Button variant="ghost" size="sm" className="gap-2 font-bold text-slate-600">
               <BarChart3 className="h-4 w-4 text-emerald-600" /> Análises

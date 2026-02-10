@@ -6,7 +6,7 @@ import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Upload, Save, X, Sparkles, Loader2, Store, DollarSign, NotebookPen, FolderOpen, Wrench } from 'lucide-react';
+import { Upload, Save, X, Sparkles, Loader2, Store, DollarSign, NotebookPen, FolderOpen, Wrench, Key } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
     care_tips: initialData?.care_tips || '',
     maintenance_frequency_months: initialData?.maintenance_frequency_months || 6,
     last_maintenance_date: initialData?.last_maintenance_date || '',
+    nfe_key: initialData?.nfe_key || '',
   });
   const [file, setFile] = useState<File | null>(null);
   const router = useRouter();
@@ -62,7 +63,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
 
       const base64Data = await readFileAsBase64(file);
       
-      const prompt = `Analise esta nota fiscal e extraia em JSON:
+      const prompt = `Analise esta nota fiscal brasileira e extraia em JSON:
       {
         "product_name": "nome",
         "purchase_date": "YYYY-MM-DD",
@@ -71,7 +72,8 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
         "price": 0.00,
         "store": "loja",
         "care_tips": "Dica de longevidade",
-        "maintenance_frequency_months": 6
+        "maintenance_frequency_months": 6,
+        "nfe_key": "Chave de 44 dígitos da NF-e sem espaços"
       }`;
 
       const result = await model.generateContent([{ inlineData: { data: base64Data, mimeType: file.type } }, prompt]);
@@ -83,7 +85,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
         name: data.product_name || prev.name,
       }));
 
-      toast.success('IA: Análise completa com cronograma sugerido!');
+      toast.success('IA: Análise completa com Chave NF-e extraída!');
     } catch (err: any) {
       toast.error("Erro ao processar com IA.");
     } finally {
@@ -113,7 +115,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
         : await supabase.from('warranties').insert({ ...payload, user_id: user.id });
 
       if (error) throw error;
-      toast.success('Guardião: Nota e cronograma salvos!');
+      toast.success('Guardião: Nota salva com sucesso!');
       router.push('/dashboard');
       router.refresh();
     } catch (err: any) {
@@ -136,11 +138,14 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
               <div className="h-16 w-16 rounded-2xl bg-teal-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
                 <Upload className="h-8 w-8" />
               </div>
-              <p className="font-bold text-slate-700">{file ? file.name : 'Suba a Nota Fiscal'}</p>
+              <div>
+                <p className="font-bold text-slate-700">{file ? file.name : 'Clique para subir a Nota Fiscal'}</p>
+                <p className="text-xs text-slate-400 font-medium text-center">IA identificará o produto e os dados fiscais</p>
+              </div>
               <AnimatePresence>
                 {file && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2 relative z-10">
-                    <Button type="button" size="sm" onClick={handleAIAnalysis} disabled={analyzing} className="bg-emerald-600">
+                    <Button type="button" size="sm" onClick={handleAIAnalysis} disabled={analyzing} className="bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200">
                       {analyzing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
                       Processar com IA
                     </Button>
@@ -181,12 +186,16 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-bold text-slate-700 ml-1"><Key className="h-4 w-4 text-emerald-600" /> Chave de Acesso NF-e (44 dígitos)</label>
+                <Input placeholder="0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000" value={formData.nfe_key} onChange={(e) => setFormData({ ...formData, nfe_key: e.target.value })} />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <Input label="Data Compra" type="date" value={formData.purchase_date} onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })} required />
                 <Input label="Garantia (Meses)" type="number" value={formData.warranty_months} onChange={(e) => setFormData({ ...formData, warranty_months: parseInt(e.target.value) })} required />
               </div>
 
-              {/* Novos campos de Manutenção */}
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-bold text-slate-700 ml-1"><Wrench className="h-4 w-4 text-emerald-600" /> Revisão a cada (meses)</label>
                 <Input type="number" value={formData.maintenance_frequency_months} onChange={(e) => setFormData({ ...formData, maintenance_frequency_months: parseInt(e.target.value) })} />

@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, QrCode, Printer } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining, generateICalLink } from '@/lib/utils/date-utils';
-import Link from 'next/link';
+import Link from 'next/navigation';
 import { notFound, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,42 +48,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setLoading(false);
   };
 
-  const generateQRCodeLabel = () => {
-    const doc = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: [80, 50] // Tamanho de etiqueta padrão
-    });
-
-    const shareUrl = `${window.location.origin}/share/${warranty.id}`;
-    
-    // Background e Borda
-    doc.setDrawColor(5, 150, 105);
-    doc.setLineWidth(1);
-    doc.rect(2, 2, 76, 46);
-
-    // Título
-    doc.setFontSize(10);
-    doc.setTextColor(15, 23, 42);
-    doc.setFont('helvetica', 'bold');
-    doc.text('GUARDIÃO DE NOTAS', 40, 10, { align: 'center' });
-
-    // Nome do Produto
-    doc.setFontSize(8);
-    doc.text(warranty.name.toUpperCase(), 40, 15, { align: 'center' });
-
-    // QR Code (Usando uma biblioteca de QR online para o PDF por simplicidade no cliente)
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
-    doc.addImage(qrUrl, 'PNG', 27, 18, 25, 25);
-
-    // Rodapé da Etiqueta
-    doc.setFontSize(6);
-    doc.setTextColor(100);
-    doc.text('Escaneie para ver a Nota Fiscal e Garantia', 40, 46, { align: 'center' });
-
-    doc.save(`etiqueta-${warranty.name}.pdf`);
-    toast.success('Etiqueta pronta para impressão!');
-  };
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-emerald-600" /></div>;
+  if (!warranty) notFound();
 
   const calculateNextMaintenance = () => {
     if (!warranty.last_maintenance_date && !warranty.purchase_date) return null;
@@ -91,87 +57,92 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return addMonths(baseDate, warranty.maintenance_frequency_months || 6);
   };
 
-  const handleAddLog = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAddingLog(true);
-    try {
-      const { error } = await supabase.from('maintenance_logs').insert({ warranty_id: id, description: newLog.description, cost: Number(newLog.cost) || 0, date: newLog.date });
-      if (error) throw error;
-      await supabase.from('warranties').update({ last_maintenance_date: newLog.date }).eq('id', id);
-      toast.success('Histórico atualizado!');
-      setNewLog({ description: '', cost: '', date: new Date().toISOString().split('T')[0] });
-      fetchData();
-    } catch (err: any) { toast.error('Erro ao salvar.'); } finally { setAddingLog(false); }
+  const calculateDepreciation = () => {
+    const price = Number(warranty.price || 0);
+    if (price === 0) return 0;
+    const purchaseDate = new Date(warranty.purchase_date);
+    const yearsOwned = (new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+    return price * 0.9 * Math.pow(0.85, yearsOwned);
   };
-
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-emerald-600" /></div>;
-  if (!warranty) notFound();
 
   const nextMaintenance = calculateNextMaintenance();
   const isMaintenanceOverdue = nextMaintenance ? isAfter(new Date(), nextMaintenance) : false;
+  
+  // Lógica de Pagamento
+  const paidPercentage = Math.round((warranty.paid_installments / (warranty.total_installments || 1)) * 100);
+  const remainingValue = (warranty.total_installments - warranty.paid_installments) * Number(warranty.installment_value || 0);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4 md:px-0">
       <div className="flex justify-between items-center">
-        <Link href="/dashboard"><Button variant="ghost" size="sm" className="gap-2 text-slate-500 font-bold"><ArrowLeft className="h-4 w-4" /> Painel Geral</Button></Link>
-        <Button onClick={generateQRCodeLabel} variant="outline" size="sm" className="gap-2 border-emerald-100 text-emerald-700 font-bold">
-          <Printer className="h-4 w-4" /> Imprimir Etiqueta QR
-        </Button>
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 font-bold hover:text-emerald-600 transition-all">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </button>
+        <Link href={`/products/edit/${warranty.id}`}>
+          <Button variant="outline" size="sm" className="gap-2 border-teal-100 font-bold">
+            <Pencil className="h-4 w-4" /> Editar Ativo
+          </Button>
+        </Link>
       </div>
 
-      <header className="flex flex-col md:flex-row justify-between items-start gap-6">
-        <div className="space-y-2">
+      <header className="space-y-2">
+        <div className="flex items-center gap-3">
           <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-slate-900 leading-none">{warranty.name}</h1>
-          <p className="text-xl text-slate-500 font-medium">{warranty.category || 'Geral'} • {warranty.folder}</p>
+          <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border shrink-0 ${getDaysRemaining(calculateExpirationDate(warranty.purchase_date, warranty.warranty_months)) < 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>Garantia {getDaysRemaining(calculateExpirationDate(warranty.purchase_date, warranty.warranty_months)) < 0 ? 'Expirada' : 'Ativa'}</div>
         </div>
-        <div className="flex gap-2">
-          <Link href={`/products/edit/${warranty.id}`}><Button variant="outline" className="gap-2 border-teal-100 font-bold"><Pencil className="h-4 w-4" /> Editar</Button></Link>
-        </div>
+        <p className="text-xl text-slate-500 font-medium">{warranty.category || 'Geral'} • {warranty.folder}</p>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
-          {/* Card de Dados Fiscais */}
-          {warranty.nfe_key && (
-            <Card className="border-none shadow-xl bg-white overflow-hidden group">
-              <CardHeader className="bg-slate-50 border-b border-slate-100 p-6 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><Key className="h-4 w-4 text-emerald-600" /> Dados Fiscais (NF-e)</CardTitle>
-                <a href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7Phu+8Kpgvw=`} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-emerald-600 uppercase flex items-center gap-1 hover:underline">Portal Sefaz <Globe className="h-3 w-3" /></a>
-              </CardHeader>
-              <CardContent className="p-6">
-                <p className="text-xs font-mono text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100 break-all text-center tracking-widest">{warranty.nfe_key}</p>
-              </CardContent>
-            </Card>
-          )}
+          {/* Card de Pagamento e Quitação */}
+          <Card className="border-none shadow-xl bg-white overflow-hidden relative">
+            <div className="absolute top-0 left-0 h-1 w-full bg-emerald-500" />
+            <CardContent className="p-8 space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <p className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-emerald-600" /> Progresso de Quitação
+                  </p>
+                  <h3 className="text-3xl font-black text-slate-900">{paidPercentage}% Pago</h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase text-slate-400">Restam</p>
+                  <p className="text-xl font-black text-slate-900">R$ {remainingValue.toLocaleString('pt-BR')}</p>
+                </div>
+              </div>
+              <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${paidPercentage}%` }} transition={{ duration: 1.5 }} className="h-full bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20" />
+              </div>
+              <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
+                <span>{warranty.paid_installments} parcelas pagas</span>
+                <span>{warranty.total_installments} parcelas total</span>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Widget de Cronograma */}
+          {/* Widget de Próxima Revisão */}
           <Card className={`border-none shadow-xl relative overflow-hidden ${isMaintenanceOverdue ? 'bg-amber-50' : 'bg-white'}`}>
             <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="flex items-center gap-6">
                 <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isMaintenanceOverdue ? 'bg-amber-100 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}><Wrench className="h-8 w-8" /></div>
                 <div><p className="text-xs font-black uppercase text-slate-400">Próxima Revisão</p><h3 className="text-2xl font-black text-slate-900">{nextMaintenance ? nextMaintenance.toLocaleDateString('pt-BR') : 'Não agendada'}</h3></div>
               </div>
-              <Button onClick={() => setAddingLog(true)} variant="outline" className="border-teal-100 font-black text-xs">Registrar Manutenção</Button>
-            </CardContent>
-          </Card>
-
-          {/* Histórico */}
-          <Card className="border-none shadow-xl">
-            <CardHeader className="border-b border-slate-50 p-6"><CardTitle className="flex items-center gap-2 text-slate-900"><History className="h-5 w-5 text-emerald-600" /> Histórico de Cuidados</CardTitle></CardHeader>
-            <CardContent className="p-6">
-              <AnimatePresence>{addingLog && (<motion.form initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} onSubmit={handleAddLog} className="mb-8 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 space-y-4 overflow-hidden"><div className="grid md:grid-cols-2 gap-4"><Input label="O que foi feito?" value={newLog.description} onChange={(e) => setNewLog({...newLog, description: e.target.value})} required /><div className="grid grid-cols-2 gap-4"><Input label="Custo" type="number" value={newLog.cost} onChange={(e) => setNewLog({...newLog, cost: e.target.value})} /><Input label="Data" type="date" value={newLog.date} onChange={(e) => setNewLog({...newLog, date: e.target.value})} required /></div></div><div className="flex gap-2"><Button type="submit" className="flex-1">Salvar</Button><Button variant="ghost" onClick={() => setAddingLog(false)}>Cancelar</Button></div></motion.form>)}</AnimatePresence>
-              <div className="space-y-4">{logs.length === 0 ? <div className="text-center py-8 text-slate-400 italic">Nenhum registro.</div> : logs.map((log) => (<div key={log.id} className="flex items-center justify-between p-4 bg-white border border-teal-50 rounded-2xl group"><div className="flex items-center gap-4"><div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><CheckCircle2 className="h-5 w-5" /></div><div><p className="text-sm font-black text-slate-800">{log.description}</p><p className="text-[10px] font-bold text-slate-400 uppercase">{formatDate(log.date)} • R$ {Number(log.cost).toLocaleString('pt-BR')}</p></div></div><button onClick={() => deleteLog(log.id)} className="opacity-0 group-hover:opacity-100 p-2 text-red-400"><Trash2 className="h-4 w-4" /></button></div>))}</div>
+              <Button size="sm" className="bg-slate-900 font-black text-[10px] uppercase tracking-widest h-10 px-6">Ver Histórico</Button>
             </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-slate-900 text-white border-none p-8 overflow-hidden relative shadow-2xl">
-            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-500 to-cyan-500" />
-            <TrendingDown className="h-8 w-8 text-emerald-400 mb-4" /><p className="text-[10px] font-black uppercase text-slate-400">Valor Pago Original</p><div className="text-4xl font-black text-white mt-1">R$ {Number(warranty.price || 0).toLocaleString('pt-BR')}</div>
+          <Card className="bg-slate-900 text-white border-none p-8 relative overflow-hidden">
+            <TrendingDown className="h-8 w-8 text-emerald-400 mb-4" />
+            <p className="text-[10px] font-black uppercase text-slate-400">Patrimônio Líquido Atual</p>
+            <div className="text-4xl font-black text-white mt-1">R$ {(calculateDepreciation() - remainingValue).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</div>
+            <p className="text-[10px] text-slate-500 mt-2">Valor de mercado menos dívida pendente.</p>
           </Card>
+          
           <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">
-            <Umbrella className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight">Proteger Ativo</h4><p className="text-xs font-medium text-emerald-100">Simule um seguro e garanta que este patrimônio não se perca.</p>
+            <Umbrella className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white">Seguro Ativo?</h4><p className="text-xs font-medium text-emerald-100">Não deixe seu patrimônio descoberto enquanto termina de pagar.</p>
             <Link href={`/insurance/simulator/${warranty.id}`} className="block"><Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4">Simular Seguro</Button></Link>
           </div>
         </div>

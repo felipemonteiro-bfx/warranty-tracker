@@ -6,7 +6,7 @@ import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Upload, Save, X, Sparkles, Loader2, Store, DollarSign, NotebookPen, FolderOpen, Wrench, Key } from 'lucide-react';
+import { Upload, Save, X, Sparkles, Loader2, Store, DollarSign, NotebookPen, FolderOpen, Wrench, Key, CreditCard } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -31,6 +31,9 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
     maintenance_frequency_months: initialData?.maintenance_frequency_months || 6,
     last_maintenance_date: initialData?.last_maintenance_date || '',
     nfe_key: initialData?.nfe_key || '',
+    total_installments: initialData?.total_installments || 1,
+    paid_installments: initialData?.paid_installments || 1,
+    installment_value: initialData?.installment_value || '',
   });
   const [file, setFile] = useState<File | null>(null);
   const router = useRouter();
@@ -73,7 +76,9 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
         "store": "loja",
         "care_tips": "Dica de longevidade",
         "maintenance_frequency_months": 6,
-        "nfe_key": "Chave de 44 dígitos da NF-e sem espaços"
+        "nfe_key": "Chave de 44 dígitos da NF-e sem espaços",
+        "total_installments": 1,
+        "installment_value": 0.00
       }`;
 
       const result = await model.generateContent([{ inlineData: { data: base64Data, mimeType: file.type } }, prompt]);
@@ -85,7 +90,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
         name: data.product_name || prev.name,
       }));
 
-      toast.success('IA: Análise completa com Chave NF-e extraída!');
+      toast.success('IA: Análise completa com dados financeiros extraídos!');
     } catch (err: any) {
       toast.error("Erro ao processar com IA.");
     } finally {
@@ -115,7 +120,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
         : await supabase.from('warranties').insert({ ...payload, user_id: user.id });
 
       if (error) throw error;
-      toast.success('Guardião: Nota salva com sucesso!');
+      toast.success('Guardião: Dados salvos com sucesso!');
       router.push('/dashboard');
       router.refresh();
     } catch (err: any) {
@@ -140,7 +145,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
               </div>
               <div>
                 <p className="font-bold text-slate-700">{file ? file.name : 'Clique para subir a Nota Fiscal'}</p>
-                <p className="text-xs text-slate-400 font-medium text-center">IA identificará o produto e os dados fiscais</p>
+                <p className="text-xs text-slate-400 font-medium text-center">IA identificará o produto e os dados fiscais/financeiros</p>
               </div>
               <AnimatePresence>
                 {file && (
@@ -181,19 +186,30 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
                   <Input value={formData.store} onChange={(e) => setFormData({ ...formData, store: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700 ml-1"><DollarSign className="h-4 w-4 text-emerald-600" /> Valor</label>
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700 ml-1"><DollarSign className="h-4 w-4 text-emerald-600" /> Valor Total</label>
                   <Input type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-bold text-slate-700 ml-1"><Key className="h-4 w-4 text-emerald-600" /> Chave de Acesso NF-e (44 dígitos)</label>
-                <Input placeholder="0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000" value={formData.nfe_key} onChange={(e) => setFormData({ ...formData, nfe_key: e.target.value })} />
+                <label className="flex items-center gap-2 text-sm font-bold text-slate-700 ml-1"><Key className="h-4 w-4 text-emerald-600" /> Chave de Acesso NF-e</label>
+                <Input placeholder="44 dígitos" value={formData.nfe_key} onChange={(e) => setFormData({ ...formData, nfe_key: e.target.value })} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Input label="Data Compra" type="date" value={formData.purchase_date} onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })} required />
                 <Input label="Garantia (Meses)" type="number" value={formData.warranty_months} onChange={(e) => setFormData({ ...formData, warranty_months: parseInt(e.target.value) })} required />
+              </div>
+
+              <div className="space-y-4 md:col-span-2">
+                <h3 className="text-sm font-black text-emerald-800 uppercase tracking-widest flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" /> Controle de Parcelamento
+                </h3>
+                <div className="grid md:grid-cols-3 gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                  <Input label="Total de Parcelas" type="number" value={formData.total_installments} onChange={(e) => setFormData({ ...formData, total_installments: parseInt(e.target.value) })} />
+                  <Input label="Parcelas Pagas" type="number" value={formData.paid_installments} onChange={(e) => setFormData({ ...formData, paid_installments: parseInt(e.target.value) })} />
+                  <Input label="Valor da Parcela" type="number" step="0.01" value={formData.installment_value} onChange={(e) => setFormData({ ...formData, installment_value: e.target.value })} />
+                </div>
               </div>
 
               <div className="space-y-2">

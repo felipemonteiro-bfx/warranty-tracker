@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText, Siren } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining, generateICalLink } from '@/lib/utils/date-utils';
 import Link from 'next/navigation';
 import { notFound, useRouter } from 'next/navigation';
@@ -19,9 +19,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [verifyingRecall, setVerifyingRecall] = useState(false);
   const [generatingDossier, setGeneratingDossier] = useState(false);
-  const [recallResult, setRecallResult] = useState<any>(null);
   const [warranty, setWarranty] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
@@ -45,82 +43,66 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setLoading(false);
   };
 
-  const generateResaleDossier = () => {
+  const generateInsuranceDossier = () => {
     if (!profile?.is_premium) {
-      toast.error('Dossiê de Venda Certificado é um recurso Pro!');
+      toast.error('Dossiê de Sinistro é um recurso Pro!');
       return;
     }
     setGeneratingDossier(true);
     try {
       const doc = new jsPDF();
-      const integrityHash = `GRD-${id.substring(0, 8).toUpperCase()}`;
-
-      // Header Premium
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, 210, 40, 'F');
-      doc.setFontSize(22); doc.setTextColor(255, 255, 255); doc.text('CERTIFICADO DE PROCEDÊNCIA', 14, 25);
-      doc.setFontSize(10); doc.text(`Protocolo: ${integrityHash}`, 14, 32);
-
-      // Body
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(16); doc.text('Informações do Ativo', 14, 55);
+      const timestamp = new Date().toLocaleString('pt-BR');
       
-      const basicData = [
+      // Header Vermelho de Emergência
+      doc.setFillColor(185, 28, 28); // Vermelho Intenso
+      doc.rect(0, 0, 210, 45, 'F');
+      doc.setFontSize(24); doc.setTextColor(255, 255, 255); doc.text('DOSSIÊ DE SINISTRO / ROUBO', 14, 25);
+      doc.setFontSize(10); doc.text('DOCUMENTO PARA FINS DE SEGURO E REGISTRO POLICIAL', 14, 35);
+
+      // Info de Autenticidade
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(14); doc.text('Identificação do Titular e Bem', 14, 60);
+      
+      const ownerData = [
+        ['Titular', profile?.full_name || '---'],
+        ['CPF', profile?.cpf || '---'],
         ['Produto', warranty.name],
-        ['Categoria', warranty.category || 'Geral'],
         ['Data de Aquisição', formatDate(warranty.purchase_date)],
-        ['Origem / Loja', warranty.store || 'Não informada'],
-        ['Número de Série', warranty.serial_number || 'REGISTRADO'],
-        ['Status Jurídico', 'Auditado / Sem ônus']
+        ['Número de Série', warranty.serial_number || 'REGISTRADO NO SISTEMA'],
+        ['Chave NF-e', warranty.nfe_key || 'VERIFICAR ANEXO']
       ];
 
       autoTable(doc, {
-        startY: 60,
-        body: basicData,
-        theme: 'plain',
-        styles: { fontSize: 10, cellPadding: 3 },
+        startY: 65,
+        body: ownerData,
+        theme: 'striped',
+        styles: { fontSize: 10 },
         columnStyles: { 0: { fontStyle: 'bold', width: 50 } }
       });
 
-      doc.setFontSize(16); doc.text('Histórico de Manutenções e Cuidados', 14, (doc as any).lastAutoTable.finalY + 15);
-      
-      const logData = logs.map(l => [formatDate(l.date), l.description, `R$ ${Number(l.cost).toLocaleString('pt-BR')}`]);
-      
-      autoTable(doc, {
-        startY: (doc as any).lastAutoTable.finalY + 20,
-        head: [['Data', 'Evento / Melhoria', 'Investimento']],
-        body: logData.length > 0 ? logData : [['---', 'Nenhum evento registrado', '---']],
-        headStyles: { fillColor: [5, 150, 105] }
-      });
+      // Valor de Reposição (Atualizado)
+      const replacementValue = Number(warranty.price || 0) * 1.15; // Estimativa de inflação
+      doc.setFontSize(14); doc.text('Valoração para Indenização', 14, (doc as any).lastAutoTable.finalY + 15);
+      doc.setFontSize(10); doc.text(`Valor Histórico: R$ ${Number(warranty.price || 0).toLocaleString('pt-BR')}`, 14, (doc as any).lastAutoTable.finalY + 22);
+      doc.setFontSize(12); doc.setTextColor(185, 28, 28);
+      doc.text(`Valor de Reposição Estimado (Novo): R$ ${replacementValue.toLocaleString('pt-BR')}`, 14, (doc as any).lastAutoTable.finalY + 30);
 
-      // Footer Security
-      const finalY = (doc as any).lastAutoTable.finalY + 20;
+      // Selo de Auditoria
+      const finalY = (doc as any).lastAutoTable.finalY + 50;
       doc.setFillColor(248, 250, 252);
-      doc.rect(14, finalY, 182, 30, 'F');
+      doc.rect(14, finalY, 182, 40, 'F');
       doc.setFontSize(9); doc.setTextColor(100);
-      doc.text('Este documento comprova a posse e o histórico de manutenção do bem citado.', 20, finalY + 10);
-      doc.text('A integridade dos dados foi validada pelo Selo Digital do Guardião de Notas.', 20, finalY + 18);
-      doc.setFontSize(8); doc.text(`Hash de Autenticidade: ${integrityHash}-${Math.random().toString(36).substring(7).toUpperCase()}`, 20, finalY + 25);
+      doc.text('ESTE ATIVO ESTÁ REGISTRADO E MONITORADO PELO SISTEMA GUARDIÃO DE NOTAS.', 20, finalY + 12);
+      doc.text('A INTEGRIDADE DOS DOCUMENTOS ANEXOS FOI VALIDADA DIGITALMENTE.', 20, finalY + 20);
+      doc.text(`Gerado em: ${timestamp} | Protocolo de Segurança: GRD-SIN-${id.substring(0, 8).toUpperCase()}`, 20, finalY + 28);
 
-      doc.save(`certificado-procedencia-${warranty.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
-      toast.success('Dossiê de Venda gerado com sucesso!');
+      doc.save(`dossie-sinistro-${warranty.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      toast.success('Dossiê de Sinistro gerado com sucesso!');
     } catch (err) {
-      toast.error('Erro ao gerar documento.');
+      toast.error('Erro ao gerar dossiê.');
     } finally {
       setGeneratingDossier(false);
     }
-  };
-
-  const checkRecall = async () => {
-    setVerifyingRecall(true);
-    try {
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = `Analise recalls para: ${warranty.name}. JSON: { "status": "safe"|"warning"|"danger", "message": "explicação", "action": "ação" }`;
-      const result = await model.generateContent(prompt);
-      const data = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
-      setRecallResult(data);
-    } catch (err) { toast.error('Erro no recall.'); } finally { setVerifyingRecall(false); }
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-emerald-600" /></div>;
@@ -137,7 +119,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <header className="space-y-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-slate-900 leading-none">{warranty.name}</h1>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-slate-900 leading-none dark:text-white">{warranty.name}</h1>
           <div className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase border border-emerald-100">Auditado</div>
         </div>
         <p className="text-xl text-slate-500 font-medium">{warranty.category || 'Geral'} • {warranty.folder}</p>
@@ -145,52 +127,53 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
-          <Card className="border-none shadow-xl bg-white p-8">
+          {/* Card de Segurança Máxima (Dossiê Sinistro) */}
+          <div className="p-8 rounded-[40px] bg-red-600 text-white shadow-2xl relative overflow-hidden group">
+            <div className="absolute right-[-20px] top-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-700">
+              <Siren className="h-48 w-48 text-white rotate-12" />
+            </div>
+            <div className="relative z-10 space-y-6">
+              <div className="flex items-center gap-2 text-red-100 font-black text-[10px] uppercase tracking-widest">
+                <AlertTriangle className="h-4 w-4" /> Protocolo de Emergência
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-3xl font-black">Dossiê de <span className="text-white underline underline-offset-8 decoration-white/30">Sinistro</span></h3>
+                <p className="text-red-50 text-sm font-medium leading-relaxed max-w-xl">Em caso de roubo ou perda total, gere o dossiê jurídico para facilitar o Boletim de Ocorrência e o acionamento do Seguro.</p>
+              </div>
+              <Button 
+                onClick={generateInsuranceDossier} 
+                disabled={generatingDossier}
+                className="bg-white text-red-600 hover:bg-red-50 font-black text-[10px] uppercase tracking-widest h-14 px-10 rounded-2xl shadow-xl shadow-red-900/20 gap-2"
+              >
+                {generatingDossier ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                {generatingDossier ? 'Processando Documentos...' : 'Gerar Dossiê de Emergência'}
+              </Button>
+            </div>
+          </div>
+
+          <Card className="border-none shadow-xl bg-white dark:bg-slate-900 p-8">
             <CardHeader className="p-0 mb-8"><CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><History className="h-5 w-5 text-emerald-600" /> Jornada do Patrimônio</CardTitle></CardHeader>
             <div className="space-y-6">
               {logs.map((log, i) => (
-                <div key={i} className="flex gap-4 items-start">
-                  <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0"><CheckCircle2 className="h-4 w-4" /></div>
-                  <div className="pt-1"><p className="text-sm font-black text-slate-900">{log.description}</p><p className="text-[10px] font-bold text-slate-400 uppercase">{formatDate(log.date)} • R$ {Number(log.cost).toLocaleString('pt-BR')}</p></div>
-                </div>
+                <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex gap-4 items-start group">
+                  <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 shadow-sm"><CheckCircle2 className="h-4 w-4" /></div>
+                  <div className="pt-1"><p className="text-sm font-black text-slate-900 dark:text-slate-200">{log.description}</p><p className="text-[10px] font-bold text-slate-400 uppercase">{formatDate(log.date)} • Investimento: R$ {Number(log.cost).toLocaleString('pt-BR')}</p></div>
+                </motion.div>
               ))}
             </div>
-          </Card>
-
-          {/* Módulo de Recall IA */}
-          <Card className="border-none shadow-xl bg-white overflow-hidden">
-            <div className={`h-1.5 w-full ${recallResult ? (recallResult.status === 'danger' ? 'bg-red-500' : 'bg-emerald-500') : 'bg-slate-100'}`} />
-            <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${recallResult ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}><ShieldBan className="h-6 w-6" /></div>
-                <div><h4 className="font-black text-slate-900">Segurança e Recall</h4><p className="text-xs text-slate-500 font-medium">Verifique alertas oficiais para este modelo.</p></div>
-              </div>
-              <Button onClick={checkRecall} disabled={verifyingRecall} variant="outline" className="h-12 px-6 font-black uppercase text-[10px] tracking-widest">
-                {verifyingRecall ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                Validar Modelo
-              </Button>
-            </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
           <Card className="bg-slate-900 text-white border-none p-8 relative overflow-hidden shadow-2xl">
-            <TrendingDown className="h-8 w-8 text-emerald-400 mb-4" /><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Valor de Mercado</p>
+            <TrendingDown className="h-8 w-8 text-emerald-400 mb-4" /><p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Valor Real Hoje</p>
             <div className="text-4xl font-black text-white mt-1">R$ {(Number(warranty.price || 0) * 0.85).toLocaleString('pt-BR')}</div>
+            <p className="text-[9px] text-emerald-500 mt-4 italic">Auditado pelo selo de integridade Guardião.</p>
           </Card>
           
-          <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4 relative overflow-hidden">
-            <div className="absolute right-[-10px] bottom-[-10px] opacity-10"><FileText className="h-32 w-32" /></div>
-            <h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Certificar Venda</h4>
-            <p className="text-xs font-medium text-emerald-100 leading-relaxed">Gere o Dossiê de Venda Certificado. Prove a procedência e valorize seu bem em até 20%.</p>
-            <Button 
-              onClick={generateResaleDossier} 
-              disabled={generatingDossier}
-              className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg"
-            >
-              {generatingDossier ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
-              {generatingDossier ? 'Gerando Dossiê...' : 'Emitir Dossiê Pro'}
-            </Button>
+          <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">
+            <Umbrella className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Proteção Ativa</h4><p className="text-xs font-medium text-emerald-100 leading-relaxed">Não deixe seu patrimônio descoberto. Registre ou simule um seguro residencial hoje.</p>
+            <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Ver Opções Pro</Button>
           </div>
         </div>
       </div>

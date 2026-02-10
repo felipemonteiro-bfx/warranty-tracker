@@ -60,3 +60,16 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-emerald-500/20 rounded-full hover:bg-emerald-500/40 transition-all;
 }
+
+/* MODO PRIVACIDADE */
+.privacy-active .money-value,
+.privacy-active [data-privacy="true"] {
+  filter: blur(8px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.3s ease;
+}
+
+.privacy-active .money-value:hover {
+  filter: blur(0); /* Opcional: revela ao passar o mouse se quiser, mas para pânico é melhor manter borrado */
+}

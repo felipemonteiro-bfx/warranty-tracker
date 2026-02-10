@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { WarrantyCard } from '@/components/warranties/WarrantyCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Package, ShieldCheck, Plus, Wallet, TrendingUp, X, CheckCircle2, FolderOpen, BarChart3, QrCode, Lock, CreditCard, Sparkles, Loader2, Fingerprint, ListChecks, ArrowRight, ShieldAlert, Calendar, Target, Pencil, Activity, BellRing } from 'lucide-react';
+import { Package, ShieldCheck, Plus, Wallet, TrendingUp, X, CheckCircle2, FolderOpen, BarChart3, QrCode, Lock, CreditCard, Sparkles, Loader2, Fingerprint, ListChecks, ArrowRight, ShieldAlert, Calendar, Target, Pencil, Activity, BellRing, FileSearch } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -36,12 +36,11 @@ export default function DashboardPage() {
     setLoading(false);
   };
 
-  // Lógica do Concierge: Gerar tarefas baseadas na falta de dados
+  // Lógica do Concierge
   const conciergeTasks = warranties.flatMap(w => {
     const tasks = [];
     if (!w.invoice_url) tasks.push({ id: `inv-${w.id}`, text: `Anexar Nota Fiscal: ${w.name}`, priority: 'high', type: 'doc', link: `/products/edit/${w.id}` });
     if (!w.serial_number) tasks.push({ id: `sn-${w.id}`, text: `Registrar S/N: ${w.name}`, priority: 'medium', type: 'security', link: `/products/edit/${w.id}` });
-    if (!w.insurance_policy && Number(w.price) > 3000) tasks.push({ id: `ins-${w.id}`, text: `Simular Seguro: ${w.name}`, priority: 'low', type: 'money', link: `/insurance/compare/${w.id}` });
     return tasks;
   }).slice(0, 4);
 
@@ -63,7 +62,6 @@ export default function DashboardPage() {
       </header>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Widget principal: Concierge de Tarefas */}
         <Card className="lg:col-span-2 border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden relative group">
           <div className="h-1.5 w-full bg-emerald-500" />
           <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between">
@@ -73,7 +71,6 @@ export default function DashboardPage() {
               </CardTitle>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações recomendadas pela IA para segurança total</p>
             </div>
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase">{conciergeTasks.length} Pendências</div>
           </CardHeader>
           <CardContent className="p-8 pt-4 space-y-4">
             {conciergeTasks.length === 0 ? (
@@ -101,7 +98,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Widget Lateral: Saúde do Patrimônio */}
         <div className="space-y-6">
           <Card className="border-none shadow-xl bg-slate-900 text-white p-8 relative overflow-hidden group">
             <div className="absolute right-0 top-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700"><Activity className="h-32 w-32 text-emerald-500" /></div>
@@ -119,7 +115,7 @@ export default function DashboardPage() {
 
           <Card className="border-none shadow-xl bg-white dark:bg-slate-900 p-8 flex flex-col justify-center">
             <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-2"><Wallet className="h-4 w-4 text-emerald-600" /> Balanço Consolidado</p>
-            <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
+            <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter money-value">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
             <p className="text-[9px] text-slate-400 font-bold uppercase mt-2">Capital Documentado Ativo</p>
           </Card>
         </div>
@@ -133,5 +129,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-import { FileSearch } from 'lucide-react';

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '../ui/Button';
-import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, Plane, History, ShieldBan, Shield } from 'lucide-react';
+import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, Plane, History, ShieldBan, Shield, EyeOff, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -17,11 +17,29 @@ export const Navbar = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
+    const saved = localStorage.getItem('privacy_mode') === 'true';
+    setIsPrivate(saved);
+    if (saved) document.documentElement.classList.add('privacy-active');
+    
     fetchNotifications();
-    setShowMoreMenu(false); // Fecha o menu ao mudar de página
+    setShowMoreMenu(false);
   }, [pathname]);
+
+  const togglePrivacy = () => {
+    const newState = !isPrivate;
+    setIsPrivate(newState);
+    localStorage.setItem('privacy_mode', newState.toString());
+    if (newState) {
+      document.documentElement.classList.add('privacy-active');
+      toast.info('Modo Privacidade Ativado: Valores ocultos.');
+    } else {
+      document.documentElement.classList.remove('privacy-active');
+      toast.success('Modo Privacidade Desativado.');
+    }
+  };
 
   const fetchNotifications = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -74,6 +92,11 @@ export const Navbar = () => {
           </div>
 
           <div className="w-px h-6 bg-teal-100 dark:bg-white/10 mx-2 hidden lg:block" />
+          
+          <Button variant="ghost" size="sm" onClick={togglePrivacy} className="h-10 w-10 p-0 rounded-xl text-slate-400 hover:text-emerald-600" title="Alternar Modo Privacidade">
+            {isPrivate ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </Button>
+
           <ThemeToggle />
           
           <div className="relative">
@@ -84,7 +107,7 @@ export const Navbar = () => {
             <AnimatePresence>{showNotifications && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-80 glass rounded-3xl shadow-2xl border border-teal-50 dark:border-white/5 overflow-hidden z-50">
                 <div className="p-4 bg-slate-900 text-white flex justify-between items-center"><span className="text-xs font-black uppercase tracking-widest text-emerald-400">Alertas</span><button onClick={() => setShowNotifications(false)}><X className="h-4 w-4 text-slate-400" /></button></div>
-                <div className="max-h-96 overflow-y-auto p-2 no-scrollbar bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="max-h-96 overflow-y-auto p-2 space-y-2 no-scrollbar bg-slate-50/50 dark:bg-slate-900/50">
                   {notifications.length === 0 ? <div className="p-8 text-center text-slate-400 font-bold uppercase text-[10px]">Tudo em dia!</div> : notifications.map(n => (
                     <div key={n.id} className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-teal-50 dark:border-white/5 flex items-start justify-between gap-3 group">
                       <div className="space-y-1"><p className="text-[10px] font-black text-emerald-600 uppercase">{n.title}</p><p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-tight">{n.message}</p></div>

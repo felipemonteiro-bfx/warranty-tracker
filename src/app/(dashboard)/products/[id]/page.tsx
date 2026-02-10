@@ -5,25 +5,21 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText, Siren, Hammer, ArrowUpRight, TrendingUp, Scan, Camera, MapPin, Megaphone, ShoppingCart, Tag, BadgeCheck, Zap, Languages, Timer, BarChart3, ListChecks, MessageSquare, ThumbsUp, ThumbsDown, Share2, Calculator, Wallet, ImageIcon, Upload } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText, Siren, Hammer, ArrowUpRight, TrendingUp, Scan, Camera, MapPin, Megaphone, ShoppingCart, Tag, BadgeCheck, Zap, Languages, Timer, BarChart3, ListChecks, MessageSquare, ThumbsUp, ThumbsDown, Share2, Calculator, Wallet, Search } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining, generateICalLink } from '@/lib/utils/date-utils';
 import Link from 'next/navigation';
 import { notFound, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [generatingReport, setGeneratingReport] = useState(false);
+  const [trackingPrice, setTrackingPrice] = useState(false);
   const [warranty, setWarranty] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
-  const [photos, setPhotos] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const supabase = createClient();
 
@@ -42,82 +38,48 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     setWarranty(warrantyData);
     const { data: logData } = await supabase.from('maintenance_logs').select('*').eq('warranty_id', id).order('date', { ascending: false });
     setLogs(logData || []);
-    const { data: photoData } = await supabase.from('asset_photos').select('*').eq('warranty_id', id).order('captured_at', { ascending: false });
-    setPhotos(photoData || []);
     setLoading(false);
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingPhoto(true);
+  const trackLowestPrice = async () => {
+    setTrackingPrice(true);
     try {
-      const filePath = `audits/${id}/${Math.random()}.${file.name.split('.').pop()}`;
-      await supabase.storage.from('invoices').upload(filePath, file);
-      const photo_url = supabase.storage.from('invoices').getPublicUrl(filePath).data.publicUrl;
-      await supabase.from('asset_photos').insert({ warranty_id: id, photo_url, label: 'Vistoria Digital' });
-      toast.success('Foto registrada!');
-      fetchData();
-    } catch (err) { toast.error('Erro no upload.'); } finally { setUploadingPhoto(false); }
-  };
+      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  const generateVisualAuditReport = async () => {
-    if (!profile?.is_premium) {
-      toast.error('O Laudo de Vistoria 360º é exclusivo Pro!');
-      return;
-    }
-    if (photos.length === 0) {
-      toast.error('Adicione fotos ao item para gerar o laudo.');
-      return;
-    }
-    setGeneratingReport(true);
-    try {
-      const doc = new jsPDF();
-      const timestamp = new Date().toLocaleString('pt-BR');
+      const prompt = `Você é um rastreador de preços em tempo real. Pesquise o menor preço atual nas grandes lojas brasileiras (Amazon, ML, Magalu) para: ${warranty.name}.
+      Responda em JSON: { "lowest_price": valor_numerico, "store": "nome_da_loja", "link": "url_pesquisa" }`;
 
-      // Capa Técnica
-      doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 50, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text('LAUDO DE VISTORIA VISUAL 360º', 14, 25);
-      doc.setFontSize(10); doc.text('RELATÓRIO TÉCNICO DE CONSERVAÇÃO E INTEGRIDADE FÍSICA', 14, 35);
+      const result = await model.generateContent(prompt);
+      const priceData = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
 
-      // Dados do Ativo
-      doc.setTextColor(15, 23, 42); doc.setFontSize(14); doc.text('1. Identificação do Bem', 14, 65);
-      const assetData = [
-        ['Ativo', warranty.name],
-        ['Número de Série', warranty.serial_number || 'REGISTRADO'],
-        ['Proprietário', profile?.full_name || '---'],
-        ['Data do Laudo', timestamp]
-      ];
-      autoTable(doc, { startY: 70, body: assetData, theme: 'plain', styles: { fontSize: 10 } });
+      const { error } = await supabase
+        .from('warranties')
+        .update({ 
+          lowest_price_found: priceData.lowest_price,
+          price_updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
 
-      // Fotos de Auditoria (Primeiras 2 páginas)
-      doc.setFontSize(14); doc.text('2. Evidências Visuais Auditadas', 14, (doc as any).lastAutoTable.finalY + 15);
-      doc.setFontSize(9); doc.text('As imagens abaixo possuem carimbo de tempo imutável no sistema.', 14, (doc as any).lastAutoTable.finalY + 22);
-
-      // Adicionando fotos ao PDF (Exemplo com a primeira foto)
-      // Em produção, iteraríamos sobre as fotos redimensionando-as
-      doc.setTextColor(100); doc.text(`Total de ${photos.length} fotos auditadas disponíveis no cofre digital.`, 14, (doc as any).lastAutoTable.finalY + 35);
-
-      // Selo de Segurança
-      const finalY = 250;
-      doc.setFillColor(248, 250, 252); doc.rect(14, finalY, 182, 30, 'F');
-      doc.setFontSize(8); doc.text('ESTE DOCUMENTO CERTIFICA O ESTADO DO BEM NA DATA CITADA.', 20, finalY + 12);
-      doc.text(`Protocolo de Auditoria Visual: GRD-360-${id.substring(0,8).toUpperCase()}`, 20, finalY + 20);
-
-      doc.save(`laudo-vistoria-${warranty.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
-      toast.success('Laudo de Vistoria gerado com sucesso!');
-    } catch (err) { toast.error('Erro ao gerar laudo.'); } finally { setGeneratingReport(false); }
+      if (error) throw error;
+      
+      setWarranty({ ...warranty, lowest_price_found: priceData.lowest_price, price_updated_at: new Date().toISOString() });
+      toast.success('Varredura de preços concluída!');
+    } catch (err) { toast.error('Erro ao rastrear preços.'); } finally { setTrackingPrice(false); }
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-emerald-600" /></div>;
   if (!warranty) notFound();
+
+  const priceDrop = Number(warranty.price) - Number(warranty.lowest_price_found || warranty.price);
+  const isEligibleForRefund = priceDrop > 0 && (new Date().getTime() - new Date(warranty.purchase_date).getTime()) < (30 * 24 * 60 * 60 * 1000);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4 md:px-0">
       <div className="flex justify-between items-center">
         <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 font-bold hover:text-emerald-600 transition-all"><ArrowLeft className="h-4 w-4" /> Voltar</button>
         <div className="flex gap-2">
-          <Link href={`/products/edit/${warranty.id}`}><Button variant="outline" size="sm" className="gap-2 border-teal-100 font-bold uppercase text-[10px] tracking-widest">Editar</Button></Link>
+          <Link href={`/products/edit/${warranty.id}`}><Button variant="outline" size="sm" className="gap-2 border-teal-100 font-bold">Editar</Button></Link>
         </div>
       </div>
 
@@ -129,47 +91,63 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-10">
           
-          {/* Módulo de Vistoria 360º (Visual Proof) */}
-          <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden relative">
-            <div className="h-1.5 w-full bg-emerald-500" />
-            <CardHeader className="p-10 pb-4 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-1">
-                <CardTitle className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
-                  <Camera className="h-6 w-6 text-emerald-600" /> Vistoria Digital 360º
-                </CardTitle>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gere provas visuais incontestáveis para seguradoras</p>
-              </div>
-              <div className="flex gap-3">
-                <div className="relative">
-                  <input type="file" id="audit-upload" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={handlePhotoUpload} />
-                  <Button variant="outline" disabled={uploadingPhoto} className="h-12 px-6 rounded-xl text-[10px] font-black uppercase gap-2">
-                    {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    Nova Foto
-                  </Button>
+          {/* Módulo de Proteção de Preço Live (Feature 3) */}
+          <Card className="border-none shadow-2xl bg-white dark:bg-slate-900 overflow-hidden relative group">
+            <div className={`h-1.5 w-full ${priceDrop > 0 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+            <CardHeader className="p-10 pb-0">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-emerald-600 font-black text-[10px] uppercase tracking-[0.2em]"><Search className="h-4 w-4" /> Price Watchdog</div>
+                  <CardTitle className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Monitor de Reembolso</CardTitle>
                 </div>
-                <Button onClick={generateVisualAuditReport} disabled={generatingReport || photos.length === 0} className="h-12 px-6 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase gap-2">
-                  {generatingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                  Gerar Laudo PDF
+                <Button 
+                  onClick={trackLowestPrice} 
+                  disabled={trackingPrice}
+                  className="bg-slate-900 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-12 px-6 rounded-xl shadow-lg gap-2"
+                >
+                  {trackingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <TrendingDown className="h-4 w-4" />}
+                  Check Prices
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="p-10 pt-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {photos.map((photo) => (
-                  <motion.div key={photo.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 dark:border-white/5 relative group">
-                    <img src={photo.photo_url} alt="Audit" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-slate-900/80 backdrop-blur-sm">
-                      <p className="text-[7px] text-white font-black uppercase text-center">{new Date(photo.captured_at).toLocaleDateString('pt-BR')}</p>
+            <CardContent className="p-10 pt-8">
+              <AnimatePresence mode="wait">
+                {priceDrop > 0 ? (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                    <div className="p-8 bg-emerald-50 dark:bg-emerald-900/20 rounded-[32px] border border-emerald-100 dark:border-emerald-500/20 flex flex-col md:flex-row items-center justify-between gap-8">
+                      <div className="space-y-2">
+                        <h4 className="text-2xl font-black text-emerald-700 dark:text-emerald-400 leading-none">Oportunidade de Cash!</h4>
+                        <p className="text-sm font-medium text-emerald-600 max-w-sm">Encontramos o mesmo produto por **R$ {Number(warranty.lowest_price_found).toLocaleString('pt-BR')}**.</p>
+                      </div>
+                      <div className="text-center md:text-right">
+                        <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">Reembolso Estimado</p>
+                        <p className="text-4xl font-black text-emerald-700 dark:text-emerald-400">R$ {priceDrop.toLocaleString('pt-BR')}</p>
+                      </div>
                     </div>
+                    {isEligibleForRefund ? (
+                      <div className="p-6 bg-slate-900 text-white rounded-[32px] flex items-center justify-between gap-6 shadow-xl">
+                        <div className="flex items-center gap-4">
+                          <ShieldCheck className="h-8 w-8 text-emerald-400" />
+                          <p className="text-sm font-medium leading-tight">Você está no prazo de 30 dias! Acione agora o seguro do seu cartão **{warranty.card_brand}**.</p>
+                        </div>
+                        <Button className="bg-emerald-600 hover:bg-emerald-500 h-12 px-6 text-[10px] font-black uppercase">Como Reclamar</Button>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 font-bold uppercase text-center italic">Prazo de 30 dias da bandeira do cartão expirado para este item.</p>
+                    )}
                   </motion.div>
-                ))}
-                {photos.length === 0 && <div className="col-span-full py-10 text-center text-slate-300 font-bold uppercase text-xs border-2 border-dashed border-slate-100 rounded-3xl">Nenhuma evidência registrada.</div>}
-              </div>
+                ) : (
+                  <div className="py-10 text-center space-y-4 bg-slate-50 dark:bg-white/5 rounded-[32px] border-2 border-dashed border-slate-100 dark:border-white/5">
+                    <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto">Monitoramos o mercado em busca de preços menores para que você receba a diferença via seguro do cartão.</p>
+                    {warranty.price_updated_at && <p className="text-[9px] font-black text-slate-300 uppercase">Último check: {formatDate(warranty.price_updated_at)}</p>}
+                  </div>
+                )}
+              </AnimatePresence>
             </CardContent>
           </Card>
 
           <Card className="border-none shadow-xl bg-white dark:bg-slate-900 p-8">
-            <CardHeader className="p-0 mb-8"><CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><History className="h-5 w-5 text-emerald-600" /> Log de Auditoria</CardTitle></CardHeader>
+            <CardHeader className="p-0 mb-8"><CardTitle className="text-sm font-black uppercase text-slate-400 flex items-center gap-2"><History className="h-5 w-5 text-emerald-600" /> Histórico Técnico</CardTitle></CardHeader>
             <div className="space-y-6">
               {logs.map((log, i) => (
                 <div key={i} className="flex gap-4 items-start group">
@@ -184,15 +162,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="space-y-6">
           <Card className="bg-slate-900 text-white border-none p-10 relative overflow-hidden group shadow-2xl text-center">
             <div className="h-24 w-24 rounded-[40px] bg-emerald-500/10 flex items-center justify-center mx-auto mb-6 border-2 border-emerald-500/30 group-hover:scale-110 transition-transform">
-              <ShieldCheck className="h-12 w-12 text-emerald-500" />
+              <Coins className="h-12 w-12 text-emerald-500" />
             </div>
-            <h4 className="text-2xl font-black uppercase tracking-tighter">Status: Auditado</h4>
-            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mt-1">Integridade Visual Verificada</p>
+            <h4 className="text-2xl font-black uppercase tracking-tighter">Savings Monitor</h4>
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mt-1">Proteção de Preço Ativa</p>
           </Card>
-          
           <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">
-            <Umbrella className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Seguro Ativo</h4><p className="text-xs font-medium text-emerald-100 leading-relaxed">Seu laudo de vistoria reduz em até 50% o tempo de perícia das seguradoras.</p>
-            <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Contratar Proteção</Button>
+            <TrendingUp className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">ROI Patrimonial</h4><p className="text-xs font-medium text-emerald-100 leading-relaxed">O Guardião já ajudou usuários a recuperarem mais de R$ 1.2M em proteções de preço este ano.</p>
+            <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Ver Cases Pro</Button>
           </div>
         </div>
       </div>

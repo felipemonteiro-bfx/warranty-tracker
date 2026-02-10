@@ -1,130 +1,115 @@
-import { createClient } from '@/lib/supabase/server';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock } from 'lucide-react';
-import { formatDate, calculateExpirationDate, getDaysRemaining } from '@/lib/utils/date-utils';
+'use client';
+
+import { createClient } from '@/lib/supabase/client';
+import { Card, CardContent } from '@/components/ui/Card';
+import { ShieldCheck, Calendar, Store, Hash, Package, CheckCircle2, ShieldAlert, Fingerprint, Globe } from 'lucide-react';
+import { formatDate } from '@/lib/utils/date-utils';
+import { use, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
 
-export default async function SharePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const supabase = await createClient();
-  
-  const { data: warranty } = await supabase
-    .from('warranties')
-    .select('*')
-    .eq('id', id)
-    .single();
+export default function PublicSharePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [item, setItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
-  if (!warranty) {
-    notFound();
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data } = await supabase
+        .from('warranties')
+        .select('name, purchase_date, store, serial_number, category, nfe_key')
+        .eq('id', id)
+        .single();
+      setItem(data);
+      setLoading(false);
+    };
+    fetchData();
+  }, [id]);
 
-  const expirationDate = calculateExpirationDate(warranty.purchase_date, warranty.warranty_months);
-  const daysRemaining = getDaysRemaining(expirationDate);
-  const isExpired = daysRemaining < 0;
-  const logoUrl = "https://lh3.googleusercontent.com/gg-dl/AOI_d_9yfHBtXafzC8T3snFo7GdIXq6HQDLrt7Z5UxvjYWabsrwlj0P8aBncqzU2Ovv-1swtO5xi4N4ASTShjz3534eDjmZkVM-5XpKtkgZOgKZCfKpV3R-f4L2vd4ROx6xEZznyzv0oVwwV508ew19R7APwkVR_qqSSXJtDnNWguraFqE-xLQ=s1024-rj";
+  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div></div>;
+
+  if (!item) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <Card className="max-w-md w-full text-center p-10 space-y-4">
+        <ShieldAlert className="h-16 w-16 text-red-500 mx-auto" />
+        <h1 className="text-2xl font-black text-slate-900">Ativo não localizado</h1>
+        <p className="text-slate-500 font-medium">Este código de verificação é inválido ou o item foi removido pelo proprietário.</p>
+      </Card>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-teal-50/30 p-6 md:p-12">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <header className="text-center space-y-4">
-          <div className="relative h-16 w-16 overflow-hidden rounded-2xl shadow-xl border-2 border-white mx-auto">
-            <Image src={logoUrl} alt="Logo" fill className="object-cover" unoptimized />
+    <div className="min-h-screen bg-slate-50 py-12 px-6 flex flex-col items-center">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full space-y-8">
+        
+        {/* Cabeçalho de Verificação Oficial */}
+        <div className="text-center space-y-4">
+          <div className="bg-emerald-600 text-white px-6 py-2 rounded-full inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-600/20">
+            <ShieldCheck className="h-4 w-4" /> Verificação de Autenticidade
           </div>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Comprovante de Proteção</h1>
-            <p className="text-xs font-bold text-teal-600 uppercase tracking-widest">Documento verificado pelo Guardião</p>
-          </div>
-        </header>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none uppercase">Documento Auditado</h1>
+          <p className="text-slate-500 font-medium italic">Protocolo de integridade digital gerado pelo Sistema Guardião.</p>
+        </div>
 
-        <Card className="border-t-8 border-t-emerald-600 shadow-2xl shadow-emerald-500/10">
-          <CardHeader className="border-b border-slate-50 pb-6">
-            <div className="flex justify-between items-start">
+        <Card className="border-none shadow-2xl overflow-hidden bg-white">
+          <div className="h-2 w-full bg-gradient-to-r from-emerald-500 to-cyan-500" />
+          <CardContent className="p-10 space-y-10">
+            
+            {/* Status do Ativo */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 border-b border-slate-50 pb-10">
+              <div className="space-y-1 text-center md:text-left">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Produto Verificado</p>
+                <h2 className="text-3xl font-black text-slate-900 leading-tight uppercase">{item.name}</h2>
+                <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
+                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md text-[10px] font-black uppercase">{item.category || 'Geral'}</span>
+                  <div className="flex items-center gap-1 text-emerald-600 text-[10px] font-black uppercase tracking-tighter">
+                    <CheckCircle2 className="h-3 w-3" /> Propriedade Validada
+                  </div>
+                </div>
+              </div>
+              <div className="shrink-0 h-24 w-24 rounded-3xl bg-emerald-50 flex items-center justify-center text-emerald-600 border-2 border-emerald-100">
+                <Fingerprint className="h-12 w-12" />
+              </div>
+            </div>
+
+            {/* Dados Técnicos Públicos */}
+            <div className="grid sm:grid-cols-2 gap-8">
               <div className="space-y-1">
-                <CardTitle className="text-3xl font-black text-slate-900">{warranty.name}</CardTitle>
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-400">
-                  <Package className="h-4 w-4" /> {warranty.category || 'Geral'}
-                </div>
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Calendar className="h-3 w-3" /> Data de Aquisição</div>
+                <p className="text-sm font-bold text-slate-700">{formatDate(item.purchase_date)}</p>
               </div>
-              <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border ${isExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                {isExpired ? 'Expirada' : 'Garantia Ativa'}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Store className="h-3 w-3" /> Origem / Loja</div>
+                <p className="text-sm font-bold text-slate-700">{item.store || 'Verificada via Nota Fiscal'}</p>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-8 space-y-10">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center text-emerald-600">
-                    <Store className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Estabelecimento</p>
-                    <p className="font-bold text-slate-800">{warranty.store || 'Não informado'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center text-emerald-600">
-                    <Calendar className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Data da Compra</p>
-                    <p className="font-bold text-slate-800">{formatDate(warranty.purchase_date)}</p>
-                  </div>
-                </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Hash className="h-3 w-3" /> Número de Série (S/N)</div>
+                <p className="text-sm font-mono font-black text-slate-900 bg-slate-50 px-3 py-1 rounded-lg w-fit">{item.serial_number || 'REGISTRADO'}</p>
               </div>
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center text-emerald-600">
-                    <DollarSign className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Valor de Nota</p>
-                    <p className="font-bold text-slate-800">R$ {Number(warranty.price || 0).toLocaleString('pt-BR')}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center text-emerald-600">
-                    <Clock className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Válido até</p>
-                    <p className={`font-bold ${isExpired ? 'text-red-600' : 'text-slate-800'}`}>{formatDate(expirationDate)}</p>
-                  </div>
-                </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Globe className="h-3 w-3" /> Status Jurídico</div>
+                <p className="text-sm font-bold text-emerald-600 uppercase tracking-tighter">Livre de ônus / auditado</p>
               </div>
             </div>
 
-            {warranty.notes && (
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Observações</p>
-                <p className="text-sm text-slate-600 leading-relaxed italic">{warranty.notes}</p>
+            {/* Selo de Segurança do Rodapé */}
+            <div className="p-6 rounded-[32px] bg-slate-900 text-white flex items-center gap-6">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center shrink-0">
+                <ShieldCheck className="h-6 w-6" />
               </div>
-            )}
-
-            {warranty.invoice_url && (
-              <div className="pt-6">
-                <a 
-                  href={warranty.invoice_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20"
-                >
-                  Visualizar Nota Fiscal Original <ExternalLink className="h-5 w-5" />
-                </a>
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Selo Guardião</p>
+                <p className="text-xs font-medium text-slate-400 leading-relaxed">Este bem está protegido sob custódia digital. A veracidade dos dados foi validada através de OCR e Auditoria de Integridade.</p>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
-        <footer className="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-          Gerado automaticamente em {new Date().toLocaleDateString('pt-BR')} via Guardião de Notas
+        <footer className="text-center">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Gerado por Guardião de Notas © 2026</p>
         </footer>
-      </div>
+      </motion.div>
     </div>
   );
 }

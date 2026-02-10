@@ -108,7 +108,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="space-y-6">
           <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">
             <Umbrella className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Proteção</h4><p className="text-xs font-medium text-emerald-100 leading-relaxed">Este bem está documentado e auditado pelo Guardião. Gere dossiês para sinistros ou vendas.</p>
-            <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Emitir Dossiê Pro</Button>
+            <div className="space-y-2 pt-2">
+              <Button variant="ghost" className="w-full bg-white text-emerald-700 font-black text-[10px] uppercase py-4 shadow-lg">Emitir Dossiê Pro</Button>
+              <Button onClick={() => window.open(`/share/${warranty.id}`, '_blank')} variant="ghost" className="w-full bg-emerald-500/20 text-white font-black text-[10px] uppercase py-4 hover:bg-emerald-500/30 transition-all border border-emerald-500/30 gap-2">
+                <QrCode className="h-4 w-4" /> Gerar Etiqueta QR
+              </Button>
+            </div>
           </div>
         </div>
       </div>

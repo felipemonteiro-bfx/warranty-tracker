@@ -2,11 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
-import { BottomNav } from "@/components/shared/BottomNav";
 import { CommandPalette } from "@/components/shared/CommandPalette";
-import DisguiseProvider from "@/components/shared/DisguiseProvider";
 import { OnboardingTour } from "@/components/shared/OnboardingTour";
-import PanicProvider from "@/components/shared/PanicProvider";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -24,15 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className="light" style={{ colorScheme: 'light' }}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <PanicProvider>
-          <DisguiseProvider>
-            <CommandPalette />
-            <OnboardingTour />
-            {children}
-            <BottomNav />
-            <Toaster position="top-center" richColors />
-          </DisguiseProvider>
-        </PanicProvider>
+        <CommandPalette />
+        <OnboardingTour />
+        {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

@@ -71,9 +71,9 @@ export default function AuditTrailPage() {
         </CardHeader>
         <div className="p-0">
           <div className="divide-y divide-slate-50 dark:divide-white/5">
-            {logs.map((log) => (
-              <motion.div key={log.id} whileHover={{ bg: 'rgba(0,0,0,0.02)' }} className="p-8 flex items-center justify-between gap-6 group">
-                <div className="flex items-start gap-6">
+                        {logs.map((log) => (
+                          <motion.div key={log.id} whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }} className="p-8 flex items-center justify-between gap-6 group">
+                            <div className="flex items-start gap-6">
                   <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
                     log.type === 'security' ? 'bg-red-50 text-red-600' :
                     log.type === 'doc' ? 'bg-cyan-50 text-cyan-600' :

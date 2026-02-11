@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Wrench, Calendar as CalendarIcon, Clock, AlertTriangle, CheckCircle2, ArrowRight, Loader2, Info, CalendarPlus, Home, Droplets, Paintbrush, Zap, ShieldCheck, Hammer, Building2, ListChecks, FileText } from 'lucide-react';
+import { Wrench, Calendar as CalendarIcon, Clock, AlertTriangle, CheckCircle2, ArrowRight, Loader2, Info, CalendarPlus, Home, Droplets, Paintbrush, Zap, ShieldCheck, Hammer, Building2, ListChecks, FileText, Plus } from 'lucide-react';
 import { formatDate, generateICalLink } from '@/lib/utils/date-utils';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';

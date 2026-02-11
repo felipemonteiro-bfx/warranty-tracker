@@ -4,7 +4,7 @@ import { Warranty } from '@/types/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { formatDate, calculateExpirationDate, getDaysRemaining } from '@/lib/utils/date-utils';
-import { Calendar, Package, Clock, Trash2, ExternalLink, Pencil, ShieldAlert, ShieldCheck, ShieldX, Store, DollarSign, Info, Share2, HeartHandshake, FileBadge } from 'lucide-react';
+import { Calendar, Package, Clock, Trash2, ExternalLink, Pencil, ShieldAlert, ShieldCheck, ShieldX, Store, DollarSign, Info, Share2, HeartHandshake, FileBadge, Umbrella } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';

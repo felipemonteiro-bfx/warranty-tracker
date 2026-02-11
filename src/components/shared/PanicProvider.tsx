@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ShieldAlert, Lock, Settings, RefreshCw, Save } from 'lucide-react';
+import { Check, ShieldAlert, Lock, Settings, RefreshCw, Save, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PanicContext = createContext({

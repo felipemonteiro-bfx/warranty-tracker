@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Search, Package, ShieldCheck, User, Plus, FileText, Zap, X, LayoutDashboard, BarChart3, Wrench, Sparkles, Loader2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { Button } from '../ui/Button';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const CommandPalette = () => {

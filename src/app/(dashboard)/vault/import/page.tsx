@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Landmark, ShieldCheck, Zap, Search, Plus, Loader2, ArrowRight, CheckCircle2, ShoppingCart, Smartphone, Laptop, Tv, Coffee, ExternalLink, ArrowLeft, BrainCircuit } from 'lucide-react';
+import { Landmark, ShieldCheck, Zap, Search, Plus, Loader2, ArrowRight, CheckCircle2, ShoppingCart, Smartphone, Laptop, Tv, Coffee, ExternalLink, ArrowLeft, BrainCircuit, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';

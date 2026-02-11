@@ -7,6 +7,7 @@ import { formatDate, calculateExpirationDate, getDaysRemaining } from '@/lib/uti
 import { Calendar, Package, Clock, Trash2, ExternalLink, Pencil, ShieldAlert, ShieldCheck, ShieldX, Store, DollarSign, Info, Share2, HeartHandshake, FileBadge, Umbrella } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';

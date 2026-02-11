@@ -5,9 +5,10 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { User, ShieldCheck, Mail, Fingerprint, Calendar, Loader2, Bell, Smartphone, Globe, Crown, ShieldAlert, Users, Plus, Trash2, FolderOpen, Heart, Anchor, Download, SmartphoneNfc, CreditCard, ExternalLink, Building2, Briefcase, HeartHandshake, FileBadge, Lock, Timer, Zap, History } from 'lucide-react';
+import { User, ShieldCheck, Mail, Fingerprint, Calendar, Loader2, Bell, Smartphone, Globe, Crown, ShieldAlert, Users, Plus, Trash2, FolderOpen, Heart, Anchor, Download, SmartphoneNfc, CreditCard, ExternalLink, Building2, Briefcase, HeartHandshake, FileBadge, Lock, Timer, Zap, History, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePanic } from '@/components/shared/PanicProvider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -16,11 +17,14 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
-  const [warranties, setWarranties] = useState<any[]>([]);
+  const [panicPw, setPanicPw] = useState('');
+  const { setPanicPassword } = usePanic();
   const supabase = createClient();
 
   useEffect(() => {
     fetchProfile();
+    const savedPw = localStorage.getItem('panic_password') || '1234';
+    setPanicPw(savedPw);
   }, []);
 
   const fetchProfile = async () => {
@@ -32,44 +36,10 @@ export default function ProfilePage() {
         full_name: '', 
         cpf: '', 
         profile_type: 'personal', 
-        legacy_enabled: false,
-        legacy_contact_name: '',
-        legacy_contact_email: '',
-        legacy_inactivity_months: 6
+        legacy_enabled: false
       });
-      
-      const { data: items } = await supabase.from('warranties').select('*');
-      if (items) setWarranties(items);
     }
     setLoading(false);
-  };
-
-  const generateSuccessionDossier = () => {
-    if (!profile?.is_premium) {
-      toast.error('O Dossiê de Sucessão é exclusivo para membros Pro!');
-      return;
-    }
-    const doc = new jsPDF();
-    doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 50, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text('INVENTÁRIO DE SUCESSÃO DIGITAL', 105, 25, { align: 'center' });
-    doc.setFontSize(10); doc.text('DOCUMENTO PARA TRANSMISSÃO PATRIMONIAL EM CASO DE AUSÊNCIA', 105, 35, { align: 'center' });
-
-    doc.setTextColor(15, 23, 42); doc.setFontSize(14); doc.text('1. Identificação do Titular', 14, 65);
-    doc.setFontSize(10); doc.text(`Titular: ${profile.full_name}`, 14, 72);
-    doc.text(`CPF: ${profile.cpf || 'Não informado'}`, 14, 77);
-    doc.text(`Beneficiário Designado: ${profile.legacy_contact_name || 'Não informado'}`, 14, 82);
-
-    doc.setFontSize(14); doc.text('2. Patrimônio Registrado e Localização', 14, 95);
-    const tableData = warranties.map(w => [w.name, w.folder, `R$ ${Number(w.price).toLocaleString('pt-BR')}`, w.serial_number || '---']);
-    autoTable(doc, { startY: 100, head: [['Ativo', 'Pasta/Setor', 'Valor de Aquisição', 'ID Serial']], body: tableData, headStyles: { fillColor: [15, 23, 42] } });
-
-    const finalY = (doc as any).lastAutoTable.finalY + 20;
-    doc.setFontSize(9); doc.setTextColor(100);
-    doc.text('Este documento certifica a posse e o histórico de ativos monitorados.', 14, finalY);
-    doc.text('O Guardião de Notas recomenda a guarda deste PDF em local seguro.', 14, finalY + 6);
-
-    doc.save(`legado-guardiao-${profile.full_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
-    toast.success('Dossiê de Sucessão gerado!');
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -78,7 +48,11 @@ export default function ProfilePage() {
     try {
       const { error } = await supabase.from('profiles').upsert({ id: user.id, ...profile, updated_at: new Date().toISOString() });
       if (error) throw error;
-      toast.success('Configurações de Legado atualizadas!');
+      
+      // Salvar senha de pânico localmente
+      setPanicPassword(panicPw);
+      
+      toast.success('Configurações atualizadas!');
     } catch (err: any) { toast.error('Erro ao salvar.'); } finally { setSaving(false); }
   };
 
@@ -89,78 +63,56 @@ export default function ProfilePage() {
       <header className="flex flex-col md:flex-row justify-between items-start gap-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase tracking-tighter">Gestão <span className="text-emerald-600">Patrimonial</span></h1>
-          <p className="text-slate-500 font-medium">Conta, Segurança e Transmissão de Legado.</p>
+          <p className="text-slate-500 font-medium">Segurança, Legado e Configurações de Elite.</p>
         </div>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Widget de Status de Legado (Death Switch UI) */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className={`border-none shadow-xl overflow-hidden relative ${profile?.legacy_enabled ? 'bg-slate-900 text-white' : 'bg-white dark:bg-slate-900'}`}>
-            <div className={`h-1.5 w-full ${profile?.legacy_enabled ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-            <CardContent className="p-8 space-y-6">
-              <div className="flex items-center gap-3">
-                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg ${profile?.legacy_enabled ? 'bg-emerald-500 text-white' : 'bg-slate-50 text-slate-400'}`}>
-                  <Timer className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className={`text-lg font-black uppercase tracking-tighter ${profile?.legacy_enabled ? 'text-white' : 'text-slate-900 dark:text-white'}`}>Gatilho de Ausência</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{profile?.legacy_enabled ? 'Monitoramento Ativo' : 'Desativado'}</p>
-                </div>
+          {/* NOVO: Gestão de Senha de Pânico */}
+          <Card className="border-none shadow-xl bg-red-600 text-white p-8 space-y-6 relative overflow-hidden group">
+            <div className="absolute right-[-10px] top-[-10px] opacity-10 group-hover:scale-110 transition-transform duration-700"><ShieldAlert className="h-32 w-32" /></div>
+            <div className="relative z-10 space-y-4">
+              <p className="text-[10px] font-black uppercase text-red-100 tracking-widest">Segurança Camaleão</p>
+              <h3 className="text-2xl font-black uppercase tracking-tighter leading-none">Senha de Desbloqueio</h3>
+              <p className="text-xs text-red-50 leading-relaxed">Defina a senha necessária para sair do modo de camuflagem (Panic Mode).</p>
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-300" />
+                <input 
+                  type="text" 
+                  value={panicPw}
+                  onChange={(e) => setPanicPw(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 bg-white/10 border border-white/20 rounded-xl font-black text-xl tracking-[0.3em] focus:outline-none focus:bg-white/20 transition-all"
+                />
               </div>
-              <p className={`text-xs font-medium leading-relaxed ${profile?.legacy_enabled ? 'text-slate-400' : 'text-slate-500'}`}>
-                Se você ficar mais de **{profile?.legacy_inactivity_months} meses** sem acessar o sistema, seu herdeiro receberá o dossiê completo.
-              </p>
-              <Button onClick={generateSuccessionDossier} variant="ghost" className={`w-full h-12 text-[10px] font-black uppercase tracking-widest border ${profile?.legacy_enabled ? 'border-white/10 hover:bg-white/5 text-white' : 'border-slate-100 dark:border-white/5'}`}>Emitir Dossiê Agora</Button>
-            </CardContent>
+            </div>
           </Card>
 
-          <div className="p-8 rounded-[40px] bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-100 dark:border-emerald-500/20 space-y-4">
-            <div className="h-10 w-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm"><HeartHandshake className="h-6 w-6" /></div>
-            <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Por que o Legado?</h4>
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed">Garantir que sua família tenha acesso às notas fiscais e localizações dos seus bens em caso de emergência é a última prova de cuidado patrimonial.</p>
-          </div>
+          <Card className="border-none shadow-xl bg-slate-900 text-white p-8 space-y-6 relative overflow-hidden group">
+            <div className="absolute right-[-10px] top-[-10px] opacity-10 group-hover:scale-110 transition-transform duration-700"><Timer className="h-32 w-32 text-emerald-500" /></div>
+            <div className="relative z-10 space-y-4">
+              <p className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Sucessão Digital</p>
+              <h3 className="text-2xl font-black uppercase tracking-tighter leading-none">Death Switch</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">Em caso de ausência prolongada, seu herdeiro receberá o acesso ao cofre.</p>
+            </div>
+          </Card>
         </div>
 
         <div className="lg:col-span-2 space-y-8">
           <form onSubmit={handleSave} className="space-y-8">
             <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
               <CardHeader className="border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/50">
-                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white font-black uppercase text-sm"><History className="h-5 w-5 text-emerald-600" /> Configuração de Sucessão</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white font-black uppercase text-sm"><User className="h-5 w-5 text-emerald-600" /> Perfil Principal</CardTitle>
               </CardHeader>
-              <CardContent className="p-8 space-y-10">
-                <div className="grid md:grid-cols-2 gap-8">
-                  <Input label="Herdeiro Designado" placeholder="Nome completo" value={profile?.legacy_contact_name} onChange={(e) => setProfile({...profile, legacy_contact_name: e.target.value})} />
-                  <Input label="E-mail do Herdeiro" placeholder="herdeiro@email.com" value={profile?.legacy_contact_email} onChange={(e) => setProfile({...profile, legacy_contact_email: e.target.value})} />
+              <CardContent className="p-8 space-y-8">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Input label="Nome Completo" value={profile?.full_name} onChange={(e) => setProfile({...profile, full_name: e.target.value})} />
+                  <Input label="CPF de Segurança" value={profile?.cpf} onChange={(e) => setProfile({...profile, cpf: e.target.value})} />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Prazo de Inatividade (Meses)</label>
-                    <select 
-                      value={profile?.legacy_inactivity_months}
-                      onChange={(e) => setProfile({...profile, legacy_inactivity_months: Number(e.target.value)})}
-                      className="w-full h-12 px-4 bg-slate-50 dark:bg-slate-800 border-2 border-teal-50 dark:border-white/5 rounded-xl focus:outline-none focus:border-emerald-500 font-bold text-sm"
-                    >
-                      <option value={3}>3 Meses</option>
-                      <option value={6}>6 Meses</option>
-                      <option value={12}>12 Meses</option>
-                      <option value={24}>24 Meses</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
-                    <input 
-                      type="checkbox" 
-                      id="legacy_toggle" 
-                      checked={profile?.legacy_enabled} 
-                      onChange={(e) => setProfile({...profile, legacy_enabled: e.target.checked})}
-                      className="h-6 w-6 rounded-lg border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" 
-                    />
-                    <label htmlFor="legacy_toggle" className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-tighter cursor-pointer">Ativar Death Switch (Sucessão Automática)</label>
-                  </div>
+                <div className="pt-8 border-t border-slate-50 dark:border-white/5">
+                  <div className="flex justify-end"><Button type="submit" disabled={saving} className="px-12 h-16 font-black uppercase text-xs tracking-widest shadow-2xl shadow-emerald-500/20">{saving ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ShieldCheck className="h-5 w-5 mr-2" />}Salvar Todas as Configurações</Button></div>
                 </div>
-
-                <div className="flex justify-end pt-4"><Button type="submit" disabled={saving} className="px-12 h-16 font-black uppercase text-xs tracking-widest shadow-2xl shadow-emerald-500/20">{saving ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ShieldCheck className="h-5 w-5 mr-2" />}Salvar Legado Pro</Button></div>
               </CardContent>
             </Card>
           </form>

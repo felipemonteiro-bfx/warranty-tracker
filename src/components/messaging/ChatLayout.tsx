@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Search, MoreVertical, Phone, Video, Send, Paperclip, Smile, Check, CheckCheck, Menu, User, Settings, LogOut, ArrowLeft, Image as ImageIcon, Mic, UserPlus, X as CloseIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
@@ -23,16 +23,72 @@ export default function ChatLayout() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
+  const fetchChatsMemo = useCallback(async (userId: string) => {
+    try {
+      const { data: chats, error } = await supabase
+        .from('chat_participants')
+        .select(`
+          chat_id,
+          chats (
+            id,
+            type,
+            created_at
+          )
+        `)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      if (chats) {
+        const formattedChats = await Promise.all(chats.map(async (cp: any) => {
+          const otherParticipant = await supabase
+            .from('chat_participants')
+            .select('user_id')
+            .eq('chat_id', cp.chat_id)
+            .neq('user_id', userId)
+            .single();
+
+          const recipientId = otherParticipant.data?.user_id;
+          const recipient = recipientId ? await supabase
+            .from('profiles')
+            .select('id, nickname, avatar_url')
+            .eq('id', recipientId)
+            .single() : null;
+
+          return {
+            ...cp.chats,
+            recipient: recipient?.data || null
+          } as ChatWithRecipient;
+        }));
+        setChats(formattedChats);
+      }
+    } catch (error) {
+      const appError = normalizeError(error);
+      logError(appError);
+      toast.error(getUserFriendlyMessage(appError));
+    }
+  }, [supabase]);
+
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
       if (user) {
-        fetchChats(user.id);
+        fetchChatsMemo(user.id);
       }
     };
     init();
-  }, []);
+  }, [fetchChatsMemo, supabase]);
+
+  const fetchMessages = useCallback(async (chatId: string) => {
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: true });
+    
+    if (data) setMessages(data);
+  }, [supabase]);
 
   useEffect(() => {
     if (selectedChat) {
@@ -54,9 +110,9 @@ export default function ChatLayout() {
         supabase.removeChannel(channel);
       };
     }
-  }, [selectedChat, supabase]);
+  }, [selectedChat, fetchMessages, supabase]);
 
-  const fetchChats = async (userId: string) => {
+  const fetchChats = useCallback(async (userId: string) => {
     try {
       const { data: participants, error } = await supabase
         .from('chat_participants')
@@ -101,17 +157,7 @@ export default function ChatLayout() {
       logError(appError);
       toast.error(getUserFriendlyMessage(appError));
     }
-  };
-
-  const fetchMessages = async (chatId: string) => {
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('chat_id', chatId)
-      .order('created_at', { ascending: true });
-    
-    if (data) setMessages(data);
-  };
+  }, [supabase]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -121,7 +167,7 @@ export default function ChatLayout() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!inputText.trim() || !selectedChat || !currentUser) return;
     
     // Rate limiting no cliente (verificação adicional no servidor)
@@ -163,9 +209,9 @@ export default function ChatLayout() {
       logError(appError);
       toast.error(getUserFriendlyMessage(appError));
     }
-  };
+  }, [inputText, selectedChat, currentUser, supabase]);
 
-  const handleAddContact = async () => {
+  const handleAddContact = useCallback(async () => {
     if (!nicknameSearch.trim() || !currentUser) return;
     
     // Validar nickname
@@ -209,7 +255,7 @@ export default function ChatLayout() {
         if (participantsError) throw participantsError;
         
         toast.success('Chat criado!');
-        fetchChats(currentUser.id);
+        fetchChatsMemo(currentUser.id);
         setIsAddContactOpen(false);
         setNicknameSearch('');
       }
@@ -218,7 +264,7 @@ export default function ChatLayout() {
       logError(appError);
       toast.error(getUserFriendlyMessage(appError));
     }
-  };
+  }, [nicknameSearch, currentUser, supabase, fetchChatsMemo]);
 
   return (
     <div className="flex h-screen bg-[#0e1621] text-white overflow-hidden font-sans">

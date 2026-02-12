@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils/cn';
-import { ButtonHTMLAttributes, useEffect, useState } from 'react';
+import { ButtonHTMLAttributes, useEffect, useState, memo } from 'react';
 import { motion } from 'framer-motion';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,7 +9,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const Button = ({ 
+export const Button = memo(({ 
   className, 
   variant = 'primary', 
   size = 'md', 
@@ -54,4 +54,6 @@ export const Button = ({
       {...(props as any)}
     />
   );
-};
+});
+
+Button.displayName = 'Button';

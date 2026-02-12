@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { WarrantyCard } from '@/components/warranties/WarrantyCard';
@@ -44,11 +44,15 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  useEffect(() => {
+  const fetchWarrantiesMemo = useCallback(() => {
     if (user) {
       fetchWarranties();
     }
-  }, [debouncedSearch, filterStatus]);
+  }, [user, debouncedSearch, filterStatus]);
+
+  useEffect(() => {
+    fetchWarrantiesMemo();
+  }, [fetchWarrantiesMemo]);
 
   const fetchWarranties = async () => {
     if (!user) return;
@@ -127,28 +131,24 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Estatísticas
-  const stats = {
-    total: warranties.length,
-    active: warranties.filter(w => {
+  // Memoizar estatísticas (cálculo custoso)
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const oneDay = 1000 * 60 * 60 * 24;
+    
+    return warranties.reduce((acc, w) => {
       const expirationDate = new Date(w.purchase_date);
       expirationDate.setMonth(expirationDate.getMonth() + w.warranty_months);
-      const daysRemaining = Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      return daysRemaining > 30;
-    }).length,
-    expiring: warranties.filter(w => {
-      const expirationDate = new Date(w.purchase_date);
-      expirationDate.setMonth(expirationDate.getMonth() + w.warranty_months);
-      const daysRemaining = Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      return daysRemaining >= 0 && daysRemaining <= 30;
-    }).length,
-    expired: warranties.filter(w => {
-      const expirationDate = new Date(w.purchase_date);
-      expirationDate.setMonth(expirationDate.getMonth() + w.warranty_months);
-      const daysRemaining = Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      return daysRemaining < 0;
-    }).length,
-  };
+      const daysRemaining = Math.ceil((expirationDate.getTime() - now) / oneDay);
+      
+      acc.total++;
+      if (daysRemaining > 30) acc.active++;
+      else if (daysRemaining >= 0 && daysRemaining <= 30) acc.expiring++;
+      else acc.expired++;
+      
+      return acc;
+    }, { total: 0, active: 0, expiring: 0, expired: 0 });
+  }, [warranties]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
@@ -311,7 +311,7 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: 'emerald' | 'amber' | 'red' }) {
+const StatCard = memo(({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: 'emerald' | 'amber' | 'red' }) => {
   const colorClasses = {
     emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50',
     amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50',
@@ -327,4 +327,6 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
       <div className="text-3xl font-black">{value}</div>
     </div>
   );
-}
+});
+
+StatCard.displayName = 'StatCard';

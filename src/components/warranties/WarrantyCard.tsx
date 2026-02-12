@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useMemo, useCallback } from 'react';
 import { Warranty } from '@/types/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -12,25 +13,34 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 
-export const WarrantyCard = ({ warranty }: { warranty: Warranty }) => {
+export const WarrantyCard = memo(({ warranty }: { warranty: Warranty }) => {
   const router = useRouter();
   const supabase = createClient();
-  const expirationDate = calculateExpirationDate(warranty.purchase_date, warranty.warranty_months);
-  const daysRemaining = getDaysRemaining(expirationDate);
-  const totalDays = warranty.warranty_months * 30;
-  const elapsedDays = totalDays - daysRemaining;
-  const progress = Math.min(Math.max((elapsedDays / totalDays) * 100, 0), 100);
+  
+  // Memoizar cálculos custosos
+  const { expirationDate, daysRemaining, progress, isExpired, isExpiringSoon } = useMemo(() => {
+    const expDate = calculateExpirationDate(warranty.purchase_date, warranty.warranty_months);
+    const daysRem = getDaysRemaining(expDate);
+    const totalDays = warranty.warranty_months * 30;
+    const elapsedDays = totalDays - daysRem;
+    const prog = Math.min(Math.max((elapsedDays / totalDays) * 100, 0), 100);
+    
+    return {
+      expirationDate: expDate,
+      daysRemaining: daysRem,
+      progress: prog,
+      isExpired: daysRem < 0,
+      isExpiringSoon: daysRem >= 0 && daysRem <= 30,
+    };
+  }, [warranty.purchase_date, warranty.warranty_months]);
 
-  const isExpired = daysRemaining < 0;
-  const isExpiringSoon = daysRemaining >= 0 && daysRemaining <= 30;
-
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     const shareUrl = `${window.location.origin}/share/${warranty.id}`;
     navigator.clipboard.writeText(shareUrl);
     toast.success('Link de compartilhamento copiado!');
-  };
+  }, [warranty.id]);
 
-  const exportResalePDF = () => {
+  const exportResalePDF = useCallback(() => {
     const doc = new jsPDF();
     doc.setFillColor(15, 23, 42); // Slate 900
     doc.rect(0, 0, 210, 40, 'F');
@@ -61,17 +71,17 @@ export const WarrantyCard = ({ warranty }: { warranty: Warranty }) => {
 
     doc.save(`resale-dossier-${warranty.name}.pdf`);
     toast.success('Dossiê de revenda gerado!');
-  };
+  }, [warranty, expirationDate]);
 
-  const handleLogSaving = async () => {
+  const handleLogSaving = useCallback(async () => {
     const amount = prompt('Quanto você economizou com este conserto/troca? (Valor em R$)');
     if (amount && !isNaN(Number(amount))) {
       const { error } = await supabase.from('warranties').update({ total_saved: (Number(warranty.total_saved || 0) + Number(amount)) }).eq('id', warranty.id);
       if (!error) { toast.success(`Economia de R$ ${amount} registrada!`); router.refresh(); }
     }
-  };
+  }, [warranty.id, warranty.total_saved, supabase, router]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (confirm('Deseja realmente excluir esta garantia?')) {
       try {
         if (warranty.invoice_url) {
@@ -85,13 +95,39 @@ export const WarrantyCard = ({ warranty }: { warranty: Warranty }) => {
         router.refresh();
       } catch (err: any) { toast.error('Erro ao excluir: ' + err.message); }
     }
-  };
+  }, [warranty.id, warranty.invoice_url, supabase, router]);
 
-  const statusConfig = isExpired 
-    ? { icon: <ShieldX className="h-4 w-4" />, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', label: 'Expirada', tip: 'Dica: Guarde a nota por mais 5 anos para fins fiscais.' }
-    : isExpiringSoon 
-      ? { icon: <ShieldAlert className="h-4 w-4" />, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', label: 'Vencendo', tip: 'Urgente: Verifique se o produto apresenta vícios antes do prazo.' }
-      : { icon: <ShieldCheck className="h-4 w-4" />, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', label: 'Protegido', tip: 'Segurança: Você tem cobertura total do fabricante.' };
+  // Memoizar statusConfig
+  const statusConfig = useMemo(() => {
+    if (isExpired) {
+      return { 
+        icon: <ShieldX className="h-4 w-4" />, 
+        color: 'text-red-600', 
+        bg: 'bg-red-50', 
+        border: 'border-red-100', 
+        label: 'Expirada', 
+        tip: 'Dica: Guarde a nota por mais 5 anos para fins fiscais.' 
+      };
+    }
+    if (isExpiringSoon) {
+      return { 
+        icon: <ShieldAlert className="h-4 w-4" />, 
+        color: 'text-amber-600', 
+        bg: 'bg-amber-50', 
+        border: 'border-amber-100', 
+        label: 'Vencendo', 
+        tip: 'Urgente: Verifique se o produto apresenta vícios antes do prazo.' 
+      };
+    }
+    return { 
+      icon: <ShieldCheck className="h-4 w-4" />, 
+      color: 'text-emerald-600', 
+      bg: 'bg-emerald-50', 
+      border: 'border-emerald-100', 
+      label: 'Protegido', 
+      tip: 'Segurança: Você tem cobertura total do fabricante.' 
+    };
+  }, [isExpired, isExpiringSoon]);
 
   return (
     <motion.div whileHover={{ y: -8 }} className="group">
@@ -166,4 +202,16 @@ export const WarrantyCard = ({ warranty }: { warranty: Warranty }) => {
       </Card>
     </motion.div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Comparação customizada para evitar re-renders desnecessários
+  return (
+    prevProps.warranty.id === nextProps.warranty.id &&
+    prevProps.warranty.name === nextProps.warranty.name &&
+    prevProps.warranty.purchase_date === nextProps.warranty.purchase_date &&
+    prevProps.warranty.warranty_months === nextProps.warranty.warranty_months &&
+    prevProps.warranty.total_saved === nextProps.warranty.total_saved &&
+    prevProps.warranty.invoice_url === nextProps.warranty.invoice_url
+  );
+});
+
+WarrantyCard.displayName = 'WarrantyCard';

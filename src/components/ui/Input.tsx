@@ -1,11 +1,11 @@
 import { cn } from '@/lib/utils/cn';
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, memo } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
 }
 
-export const Input = ({ label, className, ...props }: InputProps) => {
+export const Input = memo(({ label, className, ...props }: InputProps) => {
   return (
     <div className="space-y-1.5 w-full">
       {label && <label className="text-sm font-bold text-slate-700 ml-1">{label}</label>}
@@ -18,4 +18,6 @@ export const Input = ({ label, className, ...props }: InputProps) => {
       />
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';

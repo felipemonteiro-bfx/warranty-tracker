@@ -10,11 +10,21 @@
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
     "test": "playwright test",
+    "test:all": "node scripts/test-all.js",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
+    "test:basic": "playwright test tests/basic.test.ts",
+    "test:dashboard": "playwright test tests/dashboard.test.ts",
+    "test:ui-components": "playwright test tests/ui-components.test.ts",
+    "test:integration": "playwright test tests/integration.test.ts",
+    "test:performance": "playwright test tests/performance.test.ts",
+    "test:security": "playwright test tests/security.test.ts",
+    "test:accessibility": "playwright test tests/accessibility.test.ts",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "pre-commit": "yarn type-check && yarn lint && yarn test",
+    "ci": "yarn type-check && yarn lint && yarn test && yarn build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

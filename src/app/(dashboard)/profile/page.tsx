@@ -5,10 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { User, ShieldCheck, Mail, Fingerprint, Calendar, Loader2, Bell, Smartphone, Globe, Crown, ShieldAlert, Users, Plus, Trash2, FolderOpen, Heart, Anchor, Download, SmartphoneNfc, CreditCard, ExternalLink, Building2, Briefcase, HeartHandshake, FileBadge, Lock, Timer, Zap, History, Key } from 'lucide-react';
+import { User, ShieldCheck, Mail, Fingerprint, Calendar, Loader2, Bell, Smartphone, Globe, Crown, ShieldAlert, Users, Plus, Trash2, FolderOpen, Heart, Anchor, Download, SmartphoneNfc, CreditCard, ExternalLink, Building2, Briefcase, HeartHandshake, FileBadge, Lock, Timer, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { usePanic } from '@/components/shared/PanicProvider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -17,14 +16,10 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
-  const [panicPw, setPanicPw] = useState('');
-  const { setPanicPassword } = usePanic();
   const supabase = createClient();
 
   useEffect(() => {
     fetchProfile();
-    const savedPw = localStorage.getItem('panic_password') || '1234';
-    setPanicPw(savedPw);
   }, []);
 
   const fetchProfile = async () => {
@@ -48,10 +43,7 @@ export default function ProfilePage() {
     try {
       const { error } = await supabase.from('profiles').upsert({ id: user.id, ...profile, updated_at: new Date().toISOString() });
       if (error) throw error;
-      
-      // Salvar senha de pânico localmente
-      setPanicPassword(panicPw);
-      
+
       toast.success('Configurações atualizadas!');
     } catch (err: any) { toast.error('Erro ao salvar.'); } finally { setSaving(false); }
   };
@@ -69,25 +61,6 @@ export default function ProfilePage() {
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-1 space-y-6">
-          {/* NOVO: Gestão de Senha de Pânico */}
-          <Card className="border-none shadow-xl bg-red-600 text-white p-8 space-y-6 relative overflow-hidden group">
-            <div className="absolute right-[-10px] top-[-10px] opacity-10 group-hover:scale-110 transition-transform duration-700"><ShieldAlert className="h-32 w-32" /></div>
-            <div className="relative z-10 space-y-4">
-              <p className="text-[10px] font-black uppercase text-red-100 tracking-widest">Segurança Camaleão</p>
-              <h3 className="text-2xl font-black uppercase tracking-tighter leading-none">Senha de Desbloqueio</h3>
-              <p className="text-xs text-red-50 leading-relaxed">Defina a senha necessária para sair do modo de camuflagem (Panic Mode).</p>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-300" />
-                <input 
-                  type="text" 
-                  value={panicPw}
-                  onChange={(e) => setPanicPw(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 bg-white/10 border border-white/20 rounded-xl font-black text-xl tracking-[0.3em] focus:outline-none focus:bg-white/20 transition-all"
-                />
-              </div>
-            </div>
-          </Card>
-
           <Card className="border-none shadow-xl bg-slate-900 text-white p-8 space-y-6 relative overflow-hidden group">
             <div className="absolute right-[-10px] top-[-10px] opacity-10 group-hover:scale-110 transition-transform duration-700"><Timer className="h-32 w-32 text-emerald-500" /></div>
             <div className="relative z-10 space-y-4">

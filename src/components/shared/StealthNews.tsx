@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, Menu, Share2, MoreVertical, Clock, MessageCircle, Phone } from 'lucide-react';
+import { Search, Menu, Share2, MoreVertical, Clock, MessageCircle, Phone, Bell } from 'lucide-react';
+import { toast } from 'sonner';
+import { usePushSubscription } from '@/hooks/usePushSubscription';
+import { generateFakeNewsTitle } from '@/lib/push-disguise';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NewsItem {
@@ -28,8 +31,14 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
   const [clickCount, setClickCount] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('Top Stories');
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  const { registerAndSubscribe, isSupported, isSubscribed } = usePushSubscription();
   const categories = ['Top Stories', 'Brasil', 'Mundo', 'Tecnologia', 'Esportes', 'Saúde', 'Economia', 'Entretenimento'];
+
+  const handleEnablePush = async () => {
+    const { ok, message } = await registerAndSubscribe();
+    if (ok) toast.success(message, { duration: 4000 });
+    else toast.error(message, { duration: 5000 });
+  };
 
   useEffect(() => {
     const updateDate = () => {
@@ -75,9 +84,8 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
           .limit(1);
 
         if (unreadMessages && unreadMessages.length > 0 && onMessageNotification) {
-          const message = unreadMessages[0];
-          // Criar notificação disfarçada de notícia
-          const fakeNewsTitle = generateFakeNewsTitle(message.content);
+          const msg = unreadMessages[0];
+          const fakeNewsTitle = generateFakeNewsTitle(msg.content ?? '');
           onMessageNotification(fakeNewsTitle);
         }
       } catch (error) {
@@ -88,19 +96,6 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
     const messageCheckInterval = setInterval(checkMessages, 30000);
     return () => clearInterval(messageCheckInterval);
   }, [onMessageNotification]);
-
-  const generateFakeNewsTitle = (content: string): string => {
-    const prefixes = [
-      'Nova descoberta científica',
-      'Atualização importante',
-      'Notícia urgente',
-      'Desenvolvimento recente',
-      'Informação atualizada'
-    ];
-    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    const truncated = content.substring(0, 50);
-    return `${randomPrefix}: ${truncated}...`;
-  };
 
   const fetchNews = async () => {
     setLoading(true);
@@ -275,12 +270,28 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
     setLastClickTime(now);
   };
 
+  const handleMenuClick = () => {
+    toast.info('Menu em desenvolvimento', { duration: 2000 });
+  };
+
+  const handleNewsClick = (url?: string) => {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans pb-20">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
-          <Menu className="w-6 h-6 text-gray-600" />
+          <button
+            onClick={handleMenuClick}
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Menu"
+          >
+            <Menu className="w-6 h-6 text-gray-600" />
+          </button>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-gray-900">Notícias em Tempo Real</h1>
             <p className="text-[10px] text-gray-400 font-medium">Atualizado a cada 5 minutos • Brasil e Mundo</p>
@@ -299,8 +310,8 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
         </div>
       </header>
 
-      {/* Botão Secreto: "Fale Conosco" */}
-      <div className="px-4 py-2 border-b border-gray-100">
+      {/* Botão Secreto: "Fale Conosco" + Ativar push disfarçado */}
+      <div className="px-4 py-2 border-b border-gray-100 space-y-2">
         <button
           onClick={handleSecretButton}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-blue-600 font-medium text-sm shadow-sm"
@@ -309,6 +320,16 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
           Fale Conosco
           <span className="text-xs text-blue-400 ml-auto">Suporte 24/7</span>
         </button>
+        {isSupported && (
+          <button
+            type="button"
+            onClick={handleEnablePush}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-gray-600 font-medium text-sm border border-gray-200"
+          >
+            <Bell className="w-4 h-4" />
+            {isSubscribed ? 'Alertas de notícias ativados' : 'Receber alertas de notícias'}
+          </button>
+        )}
       </div>
 
       {/* Categories */}
@@ -343,7 +364,11 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
               </div>
             ) : (
               news.map((item, index) => (
-                <article key={item.id} className="group cursor-pointer">
+                <article 
+                  key={item.id} 
+                  className="group cursor-pointer"
+                  onClick={() => handleNewsClick(item.url)}
+                >
                   <div className="flex gap-4">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wide">

@@ -4,18 +4,16 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '../ui/Button';
-import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, Plane, History, ShieldBan, Shield, EyeOff, Eye, ShoppingBag, Zap, Landmark, Gift, MessageSquare } from 'lucide-react';
+import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, Plane, History, ShieldBan, Shield, EyeOff, Eye, ShoppingBag, Landmark, Gift } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ThemeToggle } from './ThemeToggle';
-import { usePanic } from './PanicProvider';
 
 export const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
-  const { togglePanic } = usePanic();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -75,7 +73,6 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-1">
             <Link href="/dashboard"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/dashboard' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><LayoutDashboard className="h-4 w-4" /> Painel</Button></Link>
             <Link href="/vault"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/vault' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><ShieldCheck className="h-4 w-4" /> Cofre</Button></Link>
-            <Link href="/messages"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/messages' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><MessageSquare className="h-4 w-4" /> Mensagens</Button></Link>
             <Link href="/marketplace"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/marketplace' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><ShoppingBag className="h-4 w-4" /> Marketplace</Button></Link>
             <Link href="/analytics"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/analytics' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><BarChart3 className="h-4 w-4" /> Análises</Button></Link>
             
@@ -101,10 +98,6 @@ export const Navbar = () => {
           
           <Button variant="ghost" size="sm" onClick={togglePrivacy} className="h-10 w-10 p-0 rounded-xl text-slate-400 hover:text-emerald-600" title="Alternar Modo Privacidade">
             {isPrivate ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-          </Button>
-
-          <Button variant="ghost" size="sm" onClick={togglePanic} className="h-10 w-10 p-0 rounded-xl text-slate-400 hover:text-emerald-600" title="Modo Pânico">
-            <Zap className="h-5 w-5" />
           </Button>
 
           <ThemeToggle />

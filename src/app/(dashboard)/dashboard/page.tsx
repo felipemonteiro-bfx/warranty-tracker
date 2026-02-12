@@ -7,7 +7,7 @@ import { WarrantyCard } from '@/components/warranties/WarrantyCard';
 import { LoadingSpinner, LoadingPage } from '@/components/ui/LoadingSpinner';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
-import { Plus, Search, Filter, Grid, List, Calendar, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react';
+import { Plus, Search, Filter, Grid, List, Calendar, ShieldAlert, ShieldCheck, ShieldX, FlaskConical } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -27,6 +27,7 @@ export default function DashboardPage() {
   
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
@@ -172,13 +173,40 @@ export default function DashboardPage() {
               Gerencie suas garantias e proteja seu patrimônio
             </p>
           </div>
-          <Button
-            onClick={() => router.push('/products/new')}
-            className="h-12 px-6 rounded-xl font-black uppercase tracking-wider shadow-lg"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Nova Garantia
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              disabled={seeding}
+              onClick={async () => {
+                setSeeding(true);
+                try {
+                  const res = await fetch('/api/seed-mock', { method: 'POST' });
+                  const data = await res.json();
+                  if (res.ok) {
+                    toast.success(data.message || 'Dados de teste criados.');
+                    fetchWarranties();
+                  } else {
+                    toast.error(data.error || 'Erro ao gerar dados.');
+                  }
+                } catch {
+                  toast.error('Erro ao gerar dados de teste.');
+                } finally {
+                  setSeeding(false);
+                }
+              }}
+              className="h-12 px-4 rounded-xl font-bold uppercase tracking-wider"
+            >
+              <FlaskConical className="h-5 w-5 mr-2" />
+              {seeding ? 'Gerando...' : 'Dados de teste'}
+            </Button>
+            <Button
+              onClick={() => router.push('/products/new')}
+              className="h-12 px-6 rounded-xl font-black uppercase tracking-wider shadow-lg"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Nova Garantia
+            </Button>
+          </div>
         </div>
 
         {/* Estatísticas */}

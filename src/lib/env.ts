@@ -1,19 +1,22 @@
 import { z } from 'zod';
 
+// Aceita string não vazia, undefined ou chave ausente (build Vercel pode não ter as vars)
+const optionalString = () => z.union([z.string().min(1), z.undefined()]).optional();
+
 const envSchema = z.object({
   // Supabase
   NEXT_PUBLIC_SUPABASE_URL: z.string().url('Invalid Supabase URL'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
   
   // Stripe (Opcional - app funciona sem Stripe)
-  STRIPE_SECRET_KEY: z.string().min(1).optional(),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  STRIPE_SECRET_KEY: optionalString(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optionalString(),
   
   // Gemini AI
-  NEXT_PUBLIC_GEMINI_API_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_GEMINI_API_KEY: optionalString(),
   
   // Stripe Webhook
-  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: optionalString(),
   
   // Node Environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -30,25 +33,13 @@ function getEnv(): Env {
       NODE_ENV: process.env.NODE_ENV || 'development',
     };
 
-    // Adicionar variáveis opcionais apenas se existirem e não forem undefined
-    // No browser, apenas variáveis NEXT_PUBLIC_* estão disponíveis
-    const stripeSecret = typeof window === 'undefined' ? process.env.STRIPE_SECRET_KEY : undefined;
-    const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    const webhookSecret = typeof window === 'undefined' ? process.env.STRIPE_WEBHOOK_SECRET : undefined;
-
-    if (stripeSecret) {
-      envData.STRIPE_SECRET_KEY = stripeSecret;
+    // Variáveis opcionais: incluir sempre (como undefined se não existirem) para o parse aceitar no build
+    if (typeof window === 'undefined') {
+      envData.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || undefined;
+      envData.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || undefined;
     }
-    if (stripePublishable) {
-      envData.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = stripePublishable;
-    }
-    if (geminiKey) {
-      envData.NEXT_PUBLIC_GEMINI_API_KEY = geminiKey;
-    }
-    if (webhookSecret) {
-      envData.STRIPE_WEBHOOK_SECRET = webhookSecret;
-    }
+    envData.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || undefined;
+    envData.NEXT_PUBLIC_GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || undefined;
 
     return envSchema.parse(envData);
   } catch (error) {

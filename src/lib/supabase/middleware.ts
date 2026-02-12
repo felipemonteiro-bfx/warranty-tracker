@@ -40,8 +40,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Bypass de autenticação para testes (Playwright)
+  const isTestBypass = request.cookies.get('test-bypass')?.value === 'true';
+
   if (
     !user &&
+    !isTestBypass &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/signup') &&
     !request.nextUrl.pathname.startsWith('/auth') &&

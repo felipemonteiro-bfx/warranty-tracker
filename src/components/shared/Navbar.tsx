@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '../ui/Button';
-import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, Plane, History, ShieldBan, Shield, EyeOff, Eye, ShoppingBag, Zap, Landmark, Gift } from 'lucide-react';
+import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, Plane, History, ShieldBan, Shield, EyeOff, Eye, ShoppingBag, Zap, Landmark, Gift, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -77,6 +77,7 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-1">
             <Link href="/dashboard"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/dashboard' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><LayoutDashboard className="h-4 w-4" /> Painel</Button></Link>
             <Link href="/vault"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/vault' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><ShieldCheck className="h-4 w-4" /> Cofre</Button></Link>
+            <Link href="/messages"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/messages' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><MessageSquare className="h-4 w-4" /> Mensagens</Button></Link>
             <Link href="/marketplace"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/marketplace' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><ShoppingBag className="h-4 w-4" /> Marketplace</Button></Link>
             <Link href="/analytics"><Button variant="ghost" size="sm" className={`gap-2 font-bold ${pathname === '/analytics' ? 'text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}><BarChart3 className="h-4 w-4" /> Análises</Button></Link>
             

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockWarranties, mockExpiredWarranty, mockExpiringSoonWarranty } from './fixtures/warranties';
 
 const BASE_URL = 'http://127.0.0.1:3001';
 
@@ -16,6 +17,24 @@ test.describe('Dashboard - Funcionalidades Principais', () => {
     // Desabilitar modo disfarce
     await page.addInitScript(() => {
       localStorage.setItem('disguise_mode', 'false');
+    });
+
+    // Mock de dados do Supabase (via interceptação de rede)
+    await page.route('**/rest/v1/warranties*', async route => {
+      const url = new URL(route.request().url());
+      const searchParams = url.searchParams;
+      
+      // Simula resposta do Supabase
+      const response = {
+        data: mockWarranties,
+        error: null,
+      };
+      
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(response.data),
+      });
     });
   });
 

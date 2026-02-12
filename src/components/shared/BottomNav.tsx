@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, ShieldCheck, BarChart3, User, Plus, Search } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, BarChart3, User, Plus, Search, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const BottomNav = () => {
@@ -16,7 +16,7 @@ export const BottomNav = () => {
     { name: 'Início', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
     { name: 'Cofre', path: '/vault', icon: <ShieldCheck className="h-5 w-5" /> },
     { name: 'Nova Nota', path: '/products/new', icon: <Plus className="h-6 w-6" />, primary: true },
-    { name: 'Análises', path: '/analytics', icon: <BarChart3 className="h-5 w-5" /> },
+    { name: 'Mensagens', path: '/messages', icon: <MessageSquare className="h-5 w-5" /> },
     { name: 'Perfil', path: '/profile', icon: <User className="h-5 w-5" /> },
   ];
 

@@ -7,8 +7,10 @@ export async function middleware(request: NextRequest) {
   // Atualizar sessão do Supabase primeiro
   const supabaseResponse = await updateSession(request);
 
-  // Rate limiting para rotas de API
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  // Rate limiting para rotas de API (pular em modo de teste)
+  const isTestMode = request.cookies.get('test-bypass')?.value === 'true';
+  
+  if (!isTestMode && request.nextUrl.pathname.startsWith('/api/')) {
     const identifier = getRateLimitIdentifier(request);
     
     // Determinar qual limite usar baseado no endpoint

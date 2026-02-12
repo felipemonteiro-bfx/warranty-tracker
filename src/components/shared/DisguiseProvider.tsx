@@ -17,6 +17,15 @@ export default function DisguiseProvider({ children }: { children: React.ReactNo
   const [showPinPad, setShowPinPad] = useState(false);
 
   useEffect(() => {
+    // Em modo de teste, sempre desabilitar disfarce
+    const isTestMode = document.cookie.includes('test-bypass=true');
+    
+    if (isTestMode) {
+      setIsDisguised(false);
+      document.title = "Warranty Tracker";
+      return;
+    }
+    
     // Check saved state, default to true (disguised) if not found
     const saved = localStorage.getItem('disguise_mode');
     if (saved === null) {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -13,13 +14,32 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
+    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
+    
+    if (!error && session?.user) {
+      // Ensure profile exists
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile) {
+        await supabase.from('profiles').insert({
+          id: session.user.id,
+          nickname: session.user.user_metadata.nickname || `user_${session.user.id.slice(0, 5)}`,
+          avatar_url: session.user.user_metadata.avatar_url || `https://i.pravatar.cc/150?u=${session.user.id}`,
+        });
+      }
+
+      logger.info('User authenticated via callback', {
+        userId: session.user.id,
+      });
       return NextResponse.redirect(`${origin}${next}`);
     }
-    console.error('Erro ao trocar código por sessão:', error);
+    logger.error('Failed to exchange code for session', error as Error);
   } else {
-    console.error('Nenhum código de autenticação fornecido');
+    logger.warn('No authentication code provided in callback');
   }
 
   // Se der erro, redireciona para uma página amigável (ou dashboard se já logado)

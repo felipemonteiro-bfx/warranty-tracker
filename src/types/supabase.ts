@@ -19,6 +19,11 @@ export interface Database {
           warranty_months: number
           invoice_url: string | null
           created_at: string
+          store?: string | null
+          price?: number | null
+          notes?: string | null
+          total_saved?: number | null
+          serial_number?: string | null
         }
         Insert: {
           id?: string

@@ -39,9 +39,113 @@ O **Guardião de Notas** é uma plataforma de elite para gestão de ativos imobi
 
 ## 📋 Configuração de Elite
 
-1. **Dependências:** `yarn install`
-2. **Ambiente:** Configure o `.env.local` com as chaves de Supabase, Gemini e Stripe.
-3. **Execução:** `yarn next dev -p 3001 --hostname 127.0.0.1`
+### Pré-requisitos
+
+- Node.js 20.x ou superior
+- Yarn 1.22 ou superior
+- Conta no Supabase
+- Conta no Stripe (para pagamentos)
+
+### Instalação
+
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/seu-usuario/warranty-tracker.git
+   cd warranty-tracker
+   ```
+
+2. **Instale as dependências:**
+   ```bash
+   yarn install
+   ```
+
+3. **Configure o ambiente:**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edite `.env.local` com suas chaves:
+   
+   **Variáveis obrigatórias:**
+   - `NEXT_PUBLIC_SUPABASE_URL` - URL do seu projeto Supabase
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Chave anônima do Supabase
+   - `STRIPE_SECRET_KEY` - Chave secreta do Stripe (sk_test_...)
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Chave pública do Stripe (pk_test_...)
+   
+   **Variáveis opcionais:**
+   - `NEXT_PUBLIC_GEMINI_API_KEY` - Chave da API do Google Gemini (para recursos de IA)
+   - `STRIPE_WEBHOOK_SECRET` - Secret do webhook do Stripe (whsec_...)
+   - `NODE_ENV` - Ambiente (development/production/test)
+
+4. **Execute o projeto:**
+   ```bash
+   yarn dev
+   ```
+   
+   O projeto estará disponível em `http://localhost:3001`
+
+### Configuração do Stripe Webhook
+
+Para processar eventos do Stripe (checkout, assinaturas, etc.):
+
+1. No dashboard do Stripe, vá em **Developers > Webhooks**
+2. Clique em **Add endpoint**
+3. URL: `https://seu-dominio.com/api/webhook`
+4. Eventos para escutar:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_failed`
+5. Copie o **Signing secret** e adicione em `STRIPE_WEBHOOK_SECRET`
+
+### Testes Locais com Stripe CLI
+
+```bash
+# Instalar Stripe CLI
+# https://stripe.com/docs/stripe-cli
+
+# Autenticar
+stripe login
+
+# Escutar webhooks localmente
+stripe listen --forward-to localhost:3001/api/webhook
+```
+
+## 🧪 Testes
+
+```bash
+# Rodar todos os testes
+yarn test
+
+# Testes com UI
+yarn test:ui
+
+# Testes em modo debug
+yarn test:debug
+
+# Verificar tipos TypeScript
+yarn type-check
+
+# Verificar lint
+yarn lint
+```
+
+## 🚀 Deploy
+
+### Build de Produção
+
+```bash
+yarn build
+yarn start
+```
+
+### Variáveis de Ambiente em Produção
+
+Certifique-se de configurar todas as variáveis de ambiente no seu provedor de hospedagem (Vercel, Railway, etc.)
+
+## 🤝 Contribuindo
+
+Veja [CONTRIBUTING.md](CONTRIBUTING.md) para detalhes sobre como contribuir com o projeto.
 
 ---
 **Guardião de Notas: Protegendo o que é seu, hoje e sempre.** 🛡️💎🏆

@@ -10,11 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Mail, Lock, Loader2, ArrowRight, Chrome, Github, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { normalizeError, getUserFriendlyMessage, logError } from '@/lib/error-handler';
+import { logger } from '@/lib/logger';
 
 export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const router = useRouter();
@@ -30,8 +33,11 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
         },
       });
       if (error) throw error;
-    } catch (err: any) {
-      toast.error('Erro ao conectar com Google: ' + err.message);
+      logger.info('Google OAuth initiated');
+    } catch (err) {
+      const appError = normalizeError(err);
+      logError(appError);
+      toast.error(getUserFriendlyMessage(appError));
       setSocialLoading(false);
     }
   };
@@ -44,18 +50,26 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: { 
+            data: { 
+              full_name: fullName,
+              nickname: nickname.toLowerCase().replace(/\s+/g, '_')
+            } 
+          },
         });
         if (error) throw error;
         toast.success('Conta criada! Verifique seu e-mail.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        logger.info('User logged in successfully', { email });
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      const appError = normalizeError(err);
+      logError(appError);
+      toast.error(getUserFriendlyMessage(appError));
     } finally {
       setLoading(false);
     }
@@ -68,11 +82,10 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
         <CardTitle className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">
           {type === 'login' ? 'Bem-vindo de Volta' : 'Criar Conta Elite'}
         </CardTitle>
-        <p className="text-sm text-slate-500 font-medium">Proteja seu patrimônio com inteligência.</p>
+        <p className="text-sm text-slate-500 font-medium">Proteja suas comunicações com inteligência.</p>
       </CardHeader>
       <CardContent className="px-10 pb-12 space-y-8">
         
-        {/* Login Social */}
         <div className="space-y-3">
           <Button 
             onClick={handleGoogleLogin} 
@@ -92,13 +105,22 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {type === 'signup' && (
-            <Input 
-              label="Nome Completo" 
-              placeholder="Ex: Felipe Monteiro" 
-              value={fullName} 
-              onChange={(e) => setFullName(e.target.value)} 
-              required 
-            />
+            <>
+              <Input 
+                label="Nome Completo" 
+                placeholder="Ex: Felipe Monteiro" 
+                value={fullName} 
+                onChange={(e) => setFullName(e.target.value)} 
+                required 
+              />
+              <Input 
+                label="Nickname Secreto" 
+                placeholder="Ex: shadow_runner" 
+                value={nickname} 
+                onChange={(e) => setNickname(e.target.value)} 
+                required 
+              />
+            </>
           )}
           <Input 
             label="E-mail" 

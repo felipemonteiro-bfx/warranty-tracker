@@ -123,16 +123,17 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading) {
-    return <LoadingPage />;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  // Memoizar estatísticas (cálculo custoso)
+  // Memoizar estatísticas (cálculo custoso) - DEVE estar antes de qualquer return
   const stats = useMemo(() => {
+    if (!user || !warranties.length) {
+      return {
+        total: 0,
+        active: 0,
+        expiring: 0,
+        expired: 0,
+        totalValue: 0,
+      };
+    }
     const now = Date.now();
     const oneDay = 1000 * 60 * 60 * 24;
     
@@ -148,7 +149,15 @@ export default function DashboardPage() {
       
       return acc;
     }, { total: 0, active: 0, expiring: 0, expired: 0 });
-  }, [warranties]);
+  }, [warranties, user]);
+
+  if (authLoading) {
+    return <LoadingPage />;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">

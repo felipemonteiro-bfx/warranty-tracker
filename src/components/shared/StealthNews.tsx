@@ -4,8 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, Menu, Share2, MoreVertical, Clock, MessageCircle, Phone, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePushSubscription } from '@/hooks/usePushSubscription';
-import { generateFakeNewsTitle } from '@/lib/push-disguise';
 import { motion, AnimatePresence } from 'framer-motion';
+
+function headlineFromMessage(text: string): string {
+  const t = (text || '').trim().slice(0, 60);
+  return t ? (t.length < (text || '').length ? `${t}…` : t) : 'Nova atualização';
+}
 
 interface NewsItem {
   id: string;
@@ -85,7 +89,7 @@ export default function StealthNews({ onUnlockRequest, onMessageNotification }: 
 
         if (unreadMessages && unreadMessages.length > 0 && onMessageNotification) {
           const msg = unreadMessages[0];
-          const fakeNewsTitle = generateFakeNewsTitle(msg.content ?? '');
+          const fakeNewsTitle = headlineFromMessage(msg.content ?? '');
           onMessageNotification(fakeNewsTitle);
         }
       } catch (error) {

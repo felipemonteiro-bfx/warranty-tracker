@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { stripe } from '@/lib/stripe';
+import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { createError, ErrorType, logError, getUserFriendlyMessage } from '@/lib/error-handler';
 
 export async function POST(req: Request) {
   try {
+    // Verificar se Stripe está configurado
+    if (!isStripeConfigured() || !stripe) {
+      return NextResponse.json(
+        { error: 'Stripe não está configurado. Configure STRIPE_SECRET_KEY e NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.' },
+        { status: 503 }
+      );
+    }
+
     // Verificar autenticação
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

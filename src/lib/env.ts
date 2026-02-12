@@ -5,15 +5,15 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url('Invalid Supabase URL'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
   
-  // Stripe
-  STRIPE_SECRET_KEY: z.string().min(1, 'Stripe secret key is required'),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1, 'Stripe publishable key is required'),
+  // Stripe (Opcional - app funciona sem Stripe)
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   
   // Gemini AI
-  NEXT_PUBLIC_GEMINI_API_KEY: z.string().min(1, 'Gemini API key is required').optional(),
+  NEXT_PUBLIC_GEMINI_API_KEY: z.string().min(1).optional(),
   
   // Stripe Webhook
-  STRIPE_WEBHOOK_SECRET: z.string().min(1, 'Stripe webhook secret is required').optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   
   // Node Environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -23,15 +23,34 @@ type Env = z.infer<typeof envSchema>;
 
 function getEnv(): Env {
   try {
-    return envSchema.parse({
+    // Preparar objeto com valores, convertendo undefined para não incluir no parse
+    const envData: Record<string, any> = {
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-      NEXT_PUBLIC_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
-      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
       NODE_ENV: process.env.NODE_ENV || 'development',
-    });
+    };
+
+    // Adicionar variáveis opcionais apenas se existirem e não forem undefined
+    // No browser, apenas variáveis NEXT_PUBLIC_* estão disponíveis
+    const stripeSecret = typeof window === 'undefined' ? process.env.STRIPE_SECRET_KEY : undefined;
+    const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const webhookSecret = typeof window === 'undefined' ? process.env.STRIPE_WEBHOOK_SECRET : undefined;
+
+    if (stripeSecret) {
+      envData.STRIPE_SECRET_KEY = stripeSecret;
+    }
+    if (stripePublishable) {
+      envData.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = stripePublishable;
+    }
+    if (geminiKey) {
+      envData.NEXT_PUBLIC_GEMINI_API_KEY = geminiKey;
+    }
+    if (webhookSecret) {
+      envData.STRIPE_WEBHOOK_SECRET = webhookSecret;
+    }
+
+    return envSchema.parse(envData);
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join('\n');

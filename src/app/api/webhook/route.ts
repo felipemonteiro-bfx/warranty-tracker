@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { createError, ErrorType } from '@/lib/error-handler';
@@ -8,6 +8,15 @@ import { env } from '@/lib/env';
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: Request) {
+  // Verificar se Stripe está configurado
+  if (!isStripeConfigured() || !stripe) {
+    logger.error('Stripe not configured');
+    return NextResponse.json(
+      { error: 'Stripe não está configurado' },
+      { status: 503 }
+    );
+  }
+
   if (!webhookSecret) {
     logger.error('Stripe webhook secret not configured');
     return NextResponse.json(

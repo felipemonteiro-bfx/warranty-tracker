@@ -3,7 +3,7 @@
 ## 🎉 Status Atual
 
 ### ✅ Repositório GitHub
-**URL**: https://github.com/felipemonteiro-bfx/MESSAGES
+**URL**: https://github.com/felipemonteiro-bfx/warranty-tracker
 
 **Branches Enviadas**:
 - ✅ `staging` - Branch de desenvolvimento
@@ -11,18 +11,18 @@
 
 ### ✅ Remote Configurado
 ```bash
-origin  https://github.com/felipemonteiro-bfx/MESSAGES.git
+origin  https://github.com/felipemonteiro-bfx/warranty-tracker.git
 ```
 
 ## 📦 O Que Foi Enviado
 
-Todo o código do sistema de mensagens stealth foi enviado, incluindo:
+Todo o código do Warranty Tracker foi enviado, incluindo:
 
-- ✅ Sistema stealth completo (notícias + mensagens)
-- ✅ Welcome screen "Bem-vindo, Senhor"
-- ✅ Auto-lock em 10 segundos
-- ✅ Upload de mídia (fotos, vídeos, áudio)
-- ✅ Notificações disfarçadas
+- ✅ Sistema de gestão de garantias
+- ✅ Dashboard completo
+- ✅ Sistema de mensagens integrado
+- ✅ Modo stealth/disguise
+- ✅ Upload de notas fiscais
 - ✅ Documentação completa
 - ✅ Scripts de configuração
 - ✅ Guias de setup
@@ -30,7 +30,7 @@ Todo o código do sistema de mensagens stealth foi enviado, incluindo:
 ## 🔗 Links Importantes
 
 ### Repositório
-- **GitHub**: https://github.com/felipemonteiro-bfx/MESSAGES
+- **GitHub**: https://github.com/felipemonteiro-bfx/warranty-tracker
 - **Branch Principal**: `main`
 - **Branch Desenvolvimento**: `staging`
 
@@ -53,7 +53,7 @@ Ou execute:
 
 ### 2. Fazer Deploy no Vercel
 1. Acesse: https://vercel.com
-2. Importe o repositório: `felipemonteiro-bfx/MESSAGES`
+2. Importe o repositório: `felipemonteiro-bfx/warranty-tracker`
 3. Configure variáveis de ambiente
 4. Faça deploy!
 
@@ -79,7 +79,7 @@ Acesse: http://localhost:3001
 
 Após fazer deploy no Vercel, seu link será:
 ```
-https://messages.vercel.app
+https://warranty-tracker.vercel.app
 ```
 (ou similar, dependendo do nome do projeto)
 

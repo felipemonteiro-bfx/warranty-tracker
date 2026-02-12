@@ -3,7 +3,7 @@
 ## ✅ Status Atual
 
 ### 1. GitHub ✅
-- **Repositório**: https://github.com/felipemonteiro-bfx/MESSAGES.git
+- **Repositório**: https://github.com/felipemonteiro-bfx/warranty-tracker.git
 - **Status**: Código commitado e enviado
 - **Branches**: `staging` e `main` atualizados
 
@@ -24,7 +24,7 @@
 ### Opção 1: Verificar no Vercel Dashboard
 
 1. Acesse: https://vercel.com/dashboard
-2. Procure pelo projeto `warranty-tracker` ou `MESSAGES`
+2. Procure pelo projeto `warranty-tracker`
 3. Se existir, veja a URL de produção (ex: `https://warranty-tracker.vercel.app`)
 
 ### Opção 2: Verificar via CLI

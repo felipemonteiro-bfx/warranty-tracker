@@ -9,10 +9,10 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Daily Brief - Top Stories",
-  description: "Your daily source for news and updates.",
+  title: "Warranty Tracker - Guardião de Notas",
+  description: "Plataforma de gestão de garantias e proteção patrimonial.",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Daily Brief" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Warranty Tracker" },
 };
 
 export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false };

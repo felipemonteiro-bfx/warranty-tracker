@@ -37,12 +37,13 @@ export function AdBanner({ userCategories = [], className = '' }: AdBannerProps)
       }
 
       // Buscar campanha ativa que corresponde às categorias
+      const now = new Date().toISOString();
       const { data: campaigns } = await supabase
         .from('ad_campaigns')
         .select('*, advertisers(name)')
         .eq('is_active', true)
-        .gte('end_at', new Date().toISOString())
-        .lte('start_at', new Date().toISOString());
+        .lte('start_at', now)
+        .gte('end_at', now);
 
       if (!campaigns || campaigns.length === 0) {
         setLoading(false);

@@ -21,12 +21,21 @@ export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('privacy_mode') === 'true';
-    setIsPrivate(saved);
-    if (saved) document.documentElement.classList.add('privacy-active');
-    
-    fetchNotifications();
-    setShowMoreMenu(false);
+    try {
+      const saved = localStorage.getItem('privacy_mode') === 'true';
+      setIsPrivate(saved);
+      if (saved) document.documentElement.classList.add('privacy-active');
+      
+      fetchNotifications();
+      setShowMoreMenu(false);
+    } catch (error) {
+      console.warn('Erro ao inicializar Navbar:', error);
+    }
+  }, [pathname]);
+
+  // Fechar menu mobile ao mudar de rota
+  useEffect(() => {
+    setMobileMenuOpen(false);
   }, [pathname]);
 
   const togglePrivacy = () => {
@@ -43,10 +52,18 @@ export const Navbar = () => {
   };
 
   const fetchNotifications = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase.from('notifications').select('*').eq('read', false).limit(5);
-      if (data) setNotifications(data);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase.from('notifications').select('*').eq('read', false).limit(5);
+        if (error) {
+          console.warn('Erro ao buscar notificações:', error);
+          return;
+        }
+        if (data) setNotifications(data);
+      }
+    } catch (error) {
+      console.warn('Erro ao buscar notificações:', error);
     }
   };
 
@@ -185,39 +202,57 @@ export const Navbar = () => {
         </div>
       </nav>
 
-      {/* Menu Mobile */}
+      {/* Overlay e Menu Mobile */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden fixed top-24 left-4 right-4 z-50 glass rounded-2xl shadow-2xl border border-teal-50 dark:border-white/5 overflow-hidden"
-          >
-            <div className="p-4 space-y-1">
-              <MobileMenuLink href="/dashboard" icon={<LayoutDashboard className="h-5 w-5" />} title="Painel" onClick={() => setMobileMenuOpen(false)} active={pathname === '/dashboard'} />
-              <MobileMenuLink href="/vault" icon={<ShieldCheck className="h-5 w-5" />} title="Cofre" onClick={() => setMobileMenuOpen(false)} active={pathname === '/vault'} />
-              <MobileMenuLink href="/marketplace" icon={<ShoppingBag className="h-5 w-5" />} title="Marketplace" onClick={() => setMobileMenuOpen(false)} active={pathname === '/marketplace'} />
-              <MobileMenuLink href="/analytics" icon={<BarChart3 className="h-5 w-5" />} title="Análises" onClick={() => setMobileMenuOpen(false)} active={pathname === '/analytics'} />
-              <div className="border-t border-teal-100 dark:border-white/10 my-2" />
-              <MobileMenuLink href="/maintenance" icon={<Wrench className="h-5 w-5" />} title="Revisões" onClick={() => setMobileMenuOpen(false)} active={pathname === '/maintenance'} />
-              <MobileMenuLink href="/family" icon={<Users className="h-5 w-5" />} title="Família" onClick={() => setMobileMenuOpen(false)} active={pathname === '/family'} />
-              <MobileMenuLink href="/referral" icon={<Gift className="h-5 w-5" />} title="Indique e Ganhe" onClick={() => setMobileMenuOpen(false)} active={pathname === '/referral'} />
-              <div className="border-t border-teal-100 dark:border-white/10 my-2" />
-              <MobileMenuLink href="/profile" icon={<User className="h-5 w-5" />} title="Perfil" onClick={() => setMobileMenuOpen(false)} active={pathname === '/profile'} />
-              <MobileMenuLink href="/plans" icon={<Crown className="h-5 w-5" />} title="Upgrade" onClick={() => setMobileMenuOpen(false)} active={pathname === '/plans'} />
-              <button
-                onClick={() => {
-                  supabase.auth.signOut().then(() => router.push('/login'));
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 group transition-all text-red-500"
-              >
-                <LogOut className="h-5 w-5" />
-                <span className="text-sm font-black uppercase tracking-tighter">Sair</span>
-              </button>
-            </div>
-          </motion.div>
+          <>
+            {/* Overlay para fechar ao clicar fora */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+            />
+            {/* Menu Mobile */}
+            <motion.div
+              key="mobile-menu"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden fixed top-24 left-4 right-4 z-50 glass rounded-2xl shadow-2xl border border-teal-50 dark:border-white/5 overflow-hidden"
+            >
+              <div className="p-4 space-y-1">
+                <MobileMenuLink href="/dashboard" icon={<LayoutDashboard className="h-5 w-5" />} title="Painel" onClick={() => setMobileMenuOpen(false)} active={pathname === '/dashboard'} />
+                <MobileMenuLink href="/vault" icon={<ShieldCheck className="h-5 w-5" />} title="Cofre" onClick={() => setMobileMenuOpen(false)} active={pathname === '/vault'} />
+                <MobileMenuLink href="/marketplace" icon={<ShoppingBag className="h-5 w-5" />} title="Marketplace" onClick={() => setMobileMenuOpen(false)} active={pathname === '/marketplace'} />
+                <MobileMenuLink href="/analytics" icon={<BarChart3 className="h-5 w-5" />} title="Análises" onClick={() => setMobileMenuOpen(false)} active={pathname === '/analytics'} />
+                <div className="border-t border-teal-100 dark:border-white/10 my-2" />
+                <MobileMenuLink href="/maintenance" icon={<Wrench className="h-5 w-5" />} title="Revisões" onClick={() => setMobileMenuOpen(false)} active={pathname === '/maintenance'} />
+                <MobileMenuLink href="/family" icon={<Users className="h-5 w-5" />} title="Família" onClick={() => setMobileMenuOpen(false)} active={pathname === '/family'} />
+                <MobileMenuLink href="/referral" icon={<Gift className="h-5 w-5" />} title="Indique e Ganhe" onClick={() => setMobileMenuOpen(false)} active={pathname === '/referral'} />
+                <div className="border-t border-teal-100 dark:border-white/10 my-2" />
+                <MobileMenuLink href="/profile" icon={<User className="h-5 w-5" />} title="Perfil" onClick={() => setMobileMenuOpen(false)} active={pathname === '/profile'} />
+                <MobileMenuLink href="/plans" icon={<Crown className="h-5 w-5" />} title="Upgrade" onClick={() => setMobileMenuOpen(false)} active={pathname === '/plans'} />
+                <button
+                  onClick={() => {
+                    try {
+                      supabase.auth.signOut().then(() => router.push('/login'));
+                      setMobileMenuOpen(false);
+                    } catch (error) {
+                      console.warn('Erro ao fazer logout:', error);
+                      setMobileMenuOpen(false);
+                    }
+                  }}
+                  className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 group transition-all text-red-500"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-sm font-black uppercase tracking-tighter">Sair</span>
+                </button>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

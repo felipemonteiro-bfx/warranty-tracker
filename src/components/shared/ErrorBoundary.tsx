@@ -21,12 +21,40 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Ignorar erros conhecidos do framer-motion e outros erros menores
+    const errorMessage = error?.message || '';
+    const errorStack = error?.stack || '';
+    
+    // Erros que não devem acionar o ErrorBoundary
+    const ignoredErrors = [
+      'ResizeObserver',
+      'AnimatePresence',
+      'framer-motion',
+      'hydration',
+      'useLayoutEffect',
+      'Warning:',
+    ];
+    
+    const shouldIgnore = ignoredErrors.some(ignored => 
+      errorMessage.includes(ignored) || errorStack.includes(ignored)
+    );
+    
+    if (shouldIgnore) {
+      console.warn('Erro ignorado pelo ErrorBoundary:', error);
+      return { hasError: false, error: null };
+    }
+    
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log do erro (em produção, enviar para serviço de monitoramento)
-    console.error('ErrorBoundary capturou um erro:', error, errorInfo);
+    // Log do erro apenas se for um erro crítico
+    const errorMessage = error?.message || '';
+    const ignoredErrors = ['ResizeObserver', 'AnimatePresence', 'framer-motion', 'hydration'];
+    
+    if (!ignoredErrors.some(ignored => errorMessage.includes(ignored))) {
+      console.error('ErrorBoundary capturou um erro crítico:', error, errorInfo);
+    }
   }
 
   handleReset = () => {

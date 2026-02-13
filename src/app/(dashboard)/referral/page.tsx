@@ -24,8 +24,21 @@ export default function ReferralPage() {
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setProfile(profileData);
       
-      // Simulação de contagem de indicados (Em produção: query na tabela profiles)
-      setReferredCount(3);
+      // Gerar referral_code se não existir
+      if (profileData && !profileData.referral_code) {
+        const code = `REF${user.id.slice(0, 8).toUpperCase()}`;
+        await supabase.from('profiles').update({ referral_code: code }).eq('id', user.id);
+        setProfile({ ...profileData, referral_code: code });
+      }
+      
+      // Buscar tracking real de referrals
+      const { data: referrals } = await supabase
+        .from('referral_tracking')
+        .select('*')
+        .eq('referrer_id', user.id)
+        .in('status', ['signed_up', 'converted', 'rewarded']);
+      
+      setReferredCount(referrals?.length || 0);
     }
     setLoading(false);
   };

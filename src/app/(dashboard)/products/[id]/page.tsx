@@ -186,6 +186,23 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <h4 className="text-2xl font-black uppercase tracking-tighter">Selo Guardião</h4>
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mt-1">Integridade Digital Verificada</p>
           </Card>
+
+          <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
+            <CardHeader className="p-6 pb-2">
+              <CardTitle className="text-sm font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+                <Umbrella className="h-5 w-5 text-emerald-600" /> Proteção com seguro
+              </CardTitle>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Avaliação imediata com parceiros</p>
+            </CardHeader>
+            <CardContent className="p-6 pt-2 space-y-3">
+              <Link href={`/insurance/simulator/${warranty.id}`}>
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl">
+                  Cotar seguro agora
+                </Button>
+              </Link>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">Simule e compare ofertas de seguradoras parceiras. Você protege o bem; a plataforma facilita a cotação.</p>
+            </CardContent>
+          </Card>
           
           <div className="p-8 rounded-[40px] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl space-y-4">
             <TrendingUp className="h-8 w-8 opacity-20" /><h4 className="text-xl font-black leading-tight text-white uppercase tracking-tighter">Valorização</h4><p className="text-xs font-medium text-emerald-100 leading-relaxed">Documentar cada saída e devolução aumenta o valor de revenda ao provar o cuidado com o bem.</p>

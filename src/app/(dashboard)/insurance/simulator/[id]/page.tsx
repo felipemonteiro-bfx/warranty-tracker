@@ -9,6 +9,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { InsurancePartnersCard } from '@/components/insurance/InsurancePartnersCard';
 
 export default function InsuranceSimulatorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -153,13 +154,7 @@ export default function InsuranceSimulatorPage({ params }: { params: Promise<{ i
               </CardContent>
             </Card>
             
-            <div className="p-6 rounded-3xl bg-white border border-teal-50 shadow-sm space-y-3">
-              <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Parceiros Guardião</h4>
-              <div className="grid grid-cols-2 gap-2 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all cursor-not-allowed">
-                <div className="h-8 bg-slate-100 rounded-lg" />
-                <div className="h-8 bg-slate-100 rounded-lg" />
-              </div>
-            </div>
+            <InsurancePartnersCard warrantyId={id} />
           </div>
         </motion.div>
       )}

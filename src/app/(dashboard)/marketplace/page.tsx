@@ -50,6 +50,7 @@ export default function MarketplacePage() {
         <div className="space-y-1">
           <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase tracking-tighter">Marketplace Guardião</h1>
           <p className="text-slate-500 font-medium">Bens seminovos com procedência e histórico auditado.</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Ao vender, aplica-se uma taxa de 5% para a plataforma.</p>
         </div>
         <div className="flex gap-3">
           <div className="px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">

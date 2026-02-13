@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { normalizeError, getUserFriendlyMessage, logError } from '@/lib/error-handler';
 import { logger } from '@/lib/logger';
 import { motion } from 'framer-motion';
+import { AdBanner } from '@/components/ads/AdBanner';
 
 type ViewMode = 'grid' | 'list';
 type FilterStatus = 'all' | 'active' | 'expiring' | 'expired';
@@ -330,18 +331,27 @@ export default function DashboardPage() {
             )}
           </div>
         ) : (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-            {warranties.map((warranty, index) => (
-              <motion.div
-                key={warranty.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <WarrantyCard warranty={warranty} />
-              </motion.div>
-            ))}
-          </div>
+          <>
+            {/* Anúncios Segmentados */}
+            {warranties.length > 0 && (
+              <div className="col-span-full mb-6">
+                <AdBanner userCategories={[...new Set(warranties.map(w => w.category).filter(Boolean))]} />
+              </div>
+            )}
+            
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+              {warranties.map((warranty, index) => (
+                <motion.div
+                  key={warranty.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <WarrantyCard warranty={warranty} />
+                </motion.div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

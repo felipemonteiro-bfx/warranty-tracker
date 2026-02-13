@@ -137,6 +137,75 @@ export async function POST() {
       }
     }
 
+    // Insurance Partners (seguradoras parceiras)
+    try {
+      const { data: existingPartners } = await supabase.from('insurance_partners').select('id').limit(1);
+      if (!existingPartners || existingPartners.length === 0) {
+        await supabase.from('insurance_partners').insert([
+          { name: 'Porto Seguro', slug: 'porto-seguro', logo_url: 'https://logos-world.net/wp-content/uploads/2021/02/Porto-Seguro-Logo.png', quote_url_template: 'https://www.portoseguro.com.br/cotacao?ref=guardiao', commission_percent: 15, is_active: true },
+          { name: 'SulAmérica', slug: 'sulamerica', logo_url: 'https://www.sulamerica.com.br/assets/img/logo-sulamerica.svg', quote_url_template: 'https://www.sulamerica.com.br/cotacao?ref=guardiao', commission_percent: 12, is_active: true },
+          { name: 'Bradesco Seguros', slug: 'bradesco-seguros', logo_url: 'https://www.bradescoseguros.com.br/assets/img/logo-bradesco.svg', quote_url_template: 'https://www.bradescoseguros.com.br/cotacao?ref=guardiao', commission_percent: 18, is_active: true },
+        ]);
+        results.insurance_partners = 3;
+      }
+    } catch {
+      // tabela pode não existir
+    }
+
+    // Advertisers e Campanhas
+    try {
+      const { data: existingAds } = await supabase.from('advertisers').select('id').limit(1);
+      if (!existingAds || existingAds.length === 0) {
+        const { data: advertiser1 } = await supabase.from('advertisers').insert({ name: 'Magazine Luiza', contact_email: 'marketing@magazineluiza.com.br', status: 'active' }).select('id').single();
+        const { data: advertiser2 } = await supabase.from('advertisers').insert({ name: 'Americanas', contact_email: 'ads@americanas.com.br', status: 'active' }).select('id').single();
+        
+        if (advertiser1) {
+          await supabase.from('ad_campaigns').insert({
+            advertiser_id: advertiser1.id,
+            name: 'Ofertas em Eletrônicos',
+            target_categories: ['Informática', 'Celulares', 'TV e Vídeo'],
+            image_url: 'https://via.placeholder.com/300x150?text=Magazine+Luiza',
+            link_url: 'https://www.magazineluiza.com.br/eletronicos',
+            cpm_cents: 500,
+            cpc_cents: 50,
+            start_at: new Date().toISOString(),
+            end_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            is_active: true,
+          });
+        }
+        
+        if (advertiser2) {
+          await supabase.from('ad_campaigns').insert({
+            advertiser_id: advertiser2.id,
+            name: 'Eletrodomésticos em Promoção',
+            target_categories: ['Eletrodomésticos', 'TV e Vídeo'],
+            image_url: 'https://via.placeholder.com/300x150?text=Americanas',
+            link_url: 'https://www.americanas.com.br/eletrodomesticos',
+            cpm_cents: 600,
+            cpc_cents: 60,
+            start_at: new Date().toISOString(),
+            end_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            is_active: true,
+          });
+        }
+        
+        results.ad_campaigns = 2;
+      }
+    } catch {
+      // tabela pode não existir
+    }
+
+    // Referral code (gerar se não existir)
+    try {
+      const { data: profile } = await supabase.from('profiles').select('referral_code').eq('id', userId).single();
+      if (profile && !profile.referral_code) {
+        const code = `REF${userId.slice(0, 8).toUpperCase()}`;
+        await supabase.from('profiles').update({ referral_code: code }).eq('id', userId);
+      }
+    } catch {
+      // ignora
+    }
+
     return NextResponse.json({
       ok: true,
       message: 'Dados de teste criados com sucesso.',

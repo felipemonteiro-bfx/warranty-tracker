@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '../ui/Button';
-import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, Plane, History, ShieldBan, Shield, EyeOff, Eye, ShoppingBag, Landmark, Gift } from 'lucide-react';
+import { Plus, LogOut, LayoutDashboard, User, Sparkles, Crown, Bell, X, Check, BarChart3, Users, ShieldCheck, Wrench, ChevronDown, History, ShieldBan, Shield, EyeOff, Eye, ShoppingBag, Gift } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -82,11 +82,9 @@ export const Navbar = () => {
                 {showMoreMenu && (
                   <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 mt-4 w-64 glass rounded-3xl shadow-2xl border border-teal-50 dark:border-white/5 overflow-hidden z-50 p-2 space-y-1">
                     <MenuLink href="/maintenance" icon={<Wrench className="h-4 w-4" />} title="Revisões" desc="Agenda técnica" />
-                    <MenuLink href="/vault/import" icon={<Landmark className="h-4 w-4" />} title="Importar Banco" desc="Open Finance Sync" />
                     <MenuLink href="/family" icon={<Users className="h-4 w-4" />} title="Família" desc="Gestão compartilhada" />
                     <MenuLink href="/audit" icon={<History className="h-4 w-4" />} title="Auditoria" desc="Logs de segurança" />
                     <MenuLink href="/referral" icon={<Gift className="h-4 w-4" />} title="Indique e Ganhe" desc="Ganhe meses grátis" />
-                    <MenuLink href="/travel-check" icon={<Plane className="h-4 w-4" />} title="Modo Viagem" desc="Declaração de mala" />
                     <MenuLink href="/notifications/recalls" icon={<ShieldBan className="h-4 w-4" />} title="Recall Central" desc="Alertas de fábrica" />
                   </motion.div>
                 )}

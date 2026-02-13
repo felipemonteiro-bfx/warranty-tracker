@@ -13,6 +13,26 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'mjjkzamyqisgmiekwupp.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'logos-world.net',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.portoseguro.com.br',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.sulamerica.com.br',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.bradescoseguros.com.br',
       }
     ],
   },

@@ -51,9 +51,11 @@ export function InsurancePartnersCard({ warrantyId }: { warrantyId: string }) {
       // Abrir URL do parceiro (com template se existir)
       const url = partner.quote_url_template 
         ? partner.quote_url_template.replace('{warranty_id}', warrantyId)
-        : partner.quote_url_template || '#';
+        : '#';
       
-      window.open(url, '_blank', 'noopener,noreferrer');
+      if (url !== '#') {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
       toast.success(`Redirecionando para ${partner.name}...`);
     } catch (err) {
       toast.error('Erro ao registrar cotação.');

@@ -44,7 +44,7 @@ export const Input = memo(({ label, className, error, ...props }: InputProps) =>
               : 'border-slate-100 hover:border-slate-200',
             className
           )}
-          {...props}
+          {...(props as any)}
         />
         <AnimatePresence>
           {isFocused && !error && (

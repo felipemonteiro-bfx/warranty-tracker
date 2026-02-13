@@ -137,8 +137,7 @@ export const WarrantyCard = memo(({ warranty }: { warranty: Warranty }) => {
       transition={{ 
         type: "spring",
         stiffness: 300,
-        damping: 20,
-        hover: { duration: 0.2 }
+        damping: 20
       }}
       className="group"
     >

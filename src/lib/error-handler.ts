@@ -63,24 +63,88 @@ export function normalizeError(error: unknown): AppErrorClass {
   }
 
   if (error instanceof Error) {
-    // Erros do Supabase
-    if (error.message.includes('JWT') || error.message.includes('session')) {
+    const errorMessage = error.message.toLowerCase();
+    const errorName = (error as any).name || '';
+    
+    // Erros específicos do Supabase Auth
+    if (errorMessage.includes('invalid login credentials') || 
+        errorMessage.includes('invalid_credentials') ||
+        errorMessage.includes('email not confirmed')) {
+      return createError(ErrorType.AUTHENTICATION, 'E-mail ou senha incorretos. Verifique suas credenciais.', {
+        code: 'INVALID_CREDENTIALS',
+        originalError: error,
+      });
+    }
+    
+    if (errorMessage.includes('email not confirmed') || 
+        errorMessage.includes('signup_disabled')) {
+      return createError(ErrorType.AUTHENTICATION, 'Por favor, confirme seu e-mail antes de fazer login.', {
+        code: 'EMAIL_NOT_CONFIRMED',
+        originalError: error,
+      });
+    }
+    
+    if (errorMessage.includes('user not found') || 
+        errorMessage.includes('user_not_found')) {
+      return createError(ErrorType.AUTHENTICATION, 'Usuário não encontrado. Verifique seu e-mail.', {
+        code: 'USER_NOT_FOUND',
+        originalError: error,
+      });
+    }
+    
+    if (errorMessage.includes('too many requests') || 
+        errorMessage.includes('rate_limit')) {
+      return createError(ErrorType.AUTHENTICATION, 'Muitas tentativas. Aguarde alguns minutos e tente novamente.', {
+        code: 'RATE_LIMIT',
+        originalError: error,
+      });
+    }
+
+    // Erros do Supabase - sessão
+    if (errorMessage.includes('JWT') || 
+        errorMessage.includes('session') ||
+        errorMessage.includes('token')) {
       return createError(ErrorType.AUTHENTICATION, 'Sessão expirada. Por favor, faça login novamente.', {
+        code: 'SESSION_EXPIRED',
         originalError: error,
       });
     }
 
     // Erros de rede
-    if (error.message.includes('fetch') || error.message.includes('network')) {
-      return createError(ErrorType.NETWORK, 'Erro de conexão. Verifique sua internet.', {
+    if (errorMessage.includes('fetch') || 
+        errorMessage.includes('network') ||
+        errorMessage.includes('failed to fetch') ||
+        errorName.includes('NetworkError')) {
+      return createError(ErrorType.NETWORK, 'Erro de conexão. Verifique sua internet e tente novamente.', {
+        code: 'NETWORK_ERROR',
+        originalError: error,
+      });
+    }
+    
+    // Erros de validação
+    if (errorMessage.includes('validation') || 
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('required')) {
+      return createError(ErrorType.VALIDATION, error.message || 'Dados inválidos. Verifique as informações fornecidas.', {
+        code: 'VALIDATION_ERROR',
         originalError: error,
       });
     }
 
-    return createError(ErrorType.UNKNOWN, error.message, { originalError: error });
+    return createError(ErrorType.UNKNOWN, error.message || 'Ocorreu um erro inesperado. Tente novamente.', { 
+      originalError: error 
+    });
+  }
+  
+  // Se for um objeto com propriedades de erro do Supabase
+  if (typeof error === 'object' && error !== null) {
+    const errorObj = error as any;
+    if (errorObj.message) {
+      return normalizeError(new Error(errorObj.message));
+    }
   }
 
-  return createError(ErrorType.UNKNOWN, 'Erro desconhecido', { originalError: error });
+  return createError(ErrorType.UNKNOWN, 'Erro desconhecido. Tente novamente.', { originalError: error });
 }
 
 /**
@@ -114,15 +178,25 @@ export function logError(error: AppErrorClass, context?: Record<string, unknown>
  * Obtém mensagem amigável para o usuário
  */
 export function getUserFriendlyMessage(error: AppErrorClass): string {
+  // Se a mensagem já é amigável e específica, usar ela diretamente
+  if (error.message && 
+      (error.message.includes('E-mail ou senha') ||
+       error.message.includes('confirme seu e-mail') ||
+       error.message.includes('Muitas tentativas') ||
+       error.message.includes('Sessão expirada') ||
+       error.message.includes('Erro de conexão'))) {
+    return error.message;
+  }
+  
   switch (error.type) {
     case ErrorType.AUTHENTICATION:
-      return 'Você precisa estar logado para realizar esta ação.';
+      return error.message || 'Erro de autenticação. Verifique suas credenciais e tente novamente.';
     case ErrorType.AUTHORIZATION:
       return 'Você não tem permissão para realizar esta ação.';
     case ErrorType.VALIDATION:
       return error.message || 'Dados inválidos. Verifique as informações fornecidas.';
     case ErrorType.NETWORK:
-      return 'Erro de conexão. Verifique sua internet e tente novamente.';
+      return error.message || 'Erro de conexão. Verifique sua internet e tente novamente.';
     case ErrorType.SERVER:
       return 'Erro no servidor. Tente novamente em alguns instantes.';
     default:

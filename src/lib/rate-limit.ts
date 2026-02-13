@@ -3,6 +3,8 @@
  * Para produção, considere usar @upstash/ratelimit ou Redis
  */
 
+import type { NextRequest } from 'next/server';
+
 interface RateLimitConfig {
   maxRequests: number;
   windowMs: number;
@@ -91,19 +93,26 @@ if (typeof setInterval !== 'undefined') {
  * Pode ser IP, user ID, ou combinação
  */
 export function getRateLimitIdentifier(
-  request: Request,
+  request: Request | NextRequest,
   userId?: string
 ): string {
-  // Priorizar user ID se disponível (mais preciso)
-  if (userId) {
-    return `user:${userId}`;
+  try {
+    // Priorizar user ID se disponível (mais preciso)
+    if (userId) {
+      return `user:${userId}`;
+    }
+    
+    // Fallback para IP
+    const headers = 'headers' in request ? request.headers : (request as any).headers || new Headers();
+    const forwarded = headers.get('x-forwarded-for');
+    const ip = forwarded ? forwarded.split(',')[0].trim() : 
+               headers.get('x-real-ip') || 
+               'unknown';
+    
+    return `ip:${ip}`;
+  } catch (error) {
+    // Se houver erro ao obter identificador, usar um genérico
+    console.warn('Erro ao obter identificador de rate limit:', error);
+    return 'unknown';
   }
-  
-  // Fallback para IP
-  const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0] : 
-             request.headers.get('x-real-ip') || 
-             'unknown';
-  
-  return `ip:${ip}`;
 }

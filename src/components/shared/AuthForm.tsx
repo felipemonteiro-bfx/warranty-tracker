@@ -35,15 +35,29 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
       if (error) throw error;
       logger.info('Google OAuth initiated');
     } catch (err) {
-      const appError = normalizeError(err);
-      logError(appError);
-      toast.error(getUserFriendlyMessage(appError));
-      setSocialLoading(false);
+      // Garantir que o erro não escape para o ErrorBoundary
+      try {
+        const appError = normalizeError(err);
+        logError(appError);
+        toast.error(getUserFriendlyMessage(appError));
+      } catch (errorHandlingError) {
+        console.error('Erro ao tratar erro de OAuth:', errorHandlingError);
+        toast.error('Erro ao fazer login com Google. Tente novamente.');
+      } finally {
+        setSocialLoading(false);
+      }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação básica antes de enviar
+    if (!email || !password) {
+      toast.error('Por favor, preencha todos os campos.');
+      return;
+    }
+    
     setLoading(true);
     try {
       if (type === 'signup') {
@@ -78,16 +92,54 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
         
         toast.success('Conta criada! Verifique seu e-mail para confirmar.');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        logger.info('User logged in successfully', { email });
-        router.push('/dashboard');
-        router.refresh();
+        
+        if (!data.session) {
+          throw new Error('Sessão não criada após login');
+        }
+        
+        logger.info('User logged in successfully', { email, userId: data.user?.id });
+        
+        // Aguardar um pouco para garantir que a sessão está estabelecida
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Redirecionar de forma segura sem lançar erros
+        try {
+          // Usar window.location para evitar problemas com router
+          window.location.href = '/dashboard';
+        } catch (redirectError) {
+          // Se window.location falhar, tentar router como fallback
+          try {
+            await router.push('/dashboard');
+            router.refresh();
+          } catch (routerError) {
+            console.warn('Erro ao redirecionar após login (não crítico):', routerError);
+            // Não lançar erro - apenas logar
+          }
+        }
       }
     } catch (err) {
-      const appError = normalizeError(err);
-      logError(appError);
-      toast.error(getUserFriendlyMessage(appError));
+      // Garantir que o erro não escape para o ErrorBoundary
+      try {
+        const appError = normalizeError(err);
+        logError(appError);
+        const errorMessage = getUserFriendlyMessage(appError);
+        
+        // Log detalhado para debug
+        console.warn('Erro no login (tratado):', {
+          error: err,
+          appError,
+          message: errorMessage,
+          email: email.substring(0, 3) + '***', // Log parcial do email por segurança
+        });
+        
+        toast.error(errorMessage || 'Erro ao fazer login. Tente novamente.');
+      } catch (errorHandlingError) {
+        // Se até o tratamento de erro falhar, apenas mostrar mensagem genérica
+        console.error('Erro ao tratar erro de login:', errorHandlingError);
+        toast.error('Erro ao fazer login. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }

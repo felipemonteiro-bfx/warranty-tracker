@@ -18,7 +18,16 @@ export default function Home() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) router.push('/dashboard');
+      if (session) {
+        try {
+          router.push('/dashboard');
+        } catch (error) {
+          console.warn('Erro ao redirecionar para dashboard:', error);
+        }
+      }
+    }).catch((error) => {
+      console.warn('Erro ao verificar sessão:', error);
+      // Continuar mesmo se houver erro - não bloquear a página inicial
     });
   }, [router, supabase.auth]);
 

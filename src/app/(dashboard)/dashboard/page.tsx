@@ -37,23 +37,43 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      try {
+        router.push('/login');
+      } catch (error) {
+        console.warn('Erro ao redirecionar para login:', error);
+        window.location.href = '/login';
+      }
       return;
     }
     
     if (user) {
-      fetchWarranties();
+      try {
+        fetchWarranties();
+      } catch (error) {
+        console.error('Erro ao buscar garantias:', error);
+        // Não lançar erro - apenas logar
+      }
     }
   }, [user, authLoading, router]);
 
   const fetchWarrantiesMemo = useCallback(() => {
     if (user) {
-      fetchWarranties();
+      try {
+        fetchWarranties();
+      } catch (error) {
+        console.error('Erro ao buscar garantias (callback):', error);
+        // Não lançar erro - fetchWarranties já tem tratamento interno
+      }
     }
   }, [user, debouncedSearch, filterStatus]);
 
   useEffect(() => {
-    fetchWarrantiesMemo();
+    try {
+      fetchWarrantiesMemo();
+    } catch (error) {
+      console.error('Erro no useEffect de fetchWarranties:', error);
+      // Não lançar erro - apenas logar
+    }
   }, [fetchWarrantiesMemo]);
 
   const fetchWarranties = async () => {

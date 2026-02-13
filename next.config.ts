@@ -40,6 +40,8 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
+  // Configuração do Turbopack (Next.js 16+)
+  turbopack: {},
   // Headers para PWA
   async headers() {
     return [

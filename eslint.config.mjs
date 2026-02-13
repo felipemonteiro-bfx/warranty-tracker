@@ -24,7 +24,8 @@ const eslintConfig = [
       "*.config.mjs",
       "*.config.ts",
       "**/*.generated.*",
-      "scripts/**" // Scripts Node.js podem usar require
+      "scripts/**", // Scripts Node.js podem usar require
+      "next-env.d.ts" // Arquivo gerado automaticamente pelo Next.js
     ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

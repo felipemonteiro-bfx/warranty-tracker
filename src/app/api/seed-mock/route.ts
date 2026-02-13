@@ -201,9 +201,73 @@ export async function POST() {
       if (profile && !profile.referral_code) {
         const code = `REF${userId.slice(0, 8).toUpperCase()}`;
         await supabase.from('profiles').update({ referral_code: code }).eq('id', userId);
+        results.referral_code = 'gerado';
       }
     } catch {
       // ignora
+    }
+
+    // Insurance Quotes (cotações de exemplo)
+    try {
+      const { data: partners } = await supabase.from('insurance_partners').select('id').eq('is_active', true).limit(2);
+      if (partners && partners.length > 0 && w1) {
+        await supabase.from('insurance_quotes').insert([
+          { user_id: userId, warranty_id: w1, partner_id: partners[0].id, premium_estimate: 89.90, status: 'quoted' },
+          { user_id: userId, warranty_id: w1, partner_id: partners.length > 1 ? partners[1].id : partners[0].id, premium_estimate: 95.50, status: 'quoted' },
+        ]);
+        results.insurance_quotes = 2;
+      }
+    } catch {
+      // tabela pode não existir
+    }
+
+    // Marketplace Transactions (transações fechadas com taxa)
+    try {
+      const { data: listings } = await supabase.from('marketplace_listings').select('id, user_id, listing_price, platform_fee_percent').eq('user_id', userId).limit(1);
+      if (listings && listings.length > 0 && w1) {
+        const listing = listings[0];
+        const feePercent = listing.platform_fee_percent || 5;
+        const feeAmount = (Number(listing.listing_price) * feePercent) / 100;
+        await supabase.from('marketplace_transactions').insert([
+          {
+            listing_id: listing.id,
+            buyer_id: userId, // Em produção seria outro usuário
+            seller_id: listing.user_id,
+            amount: listing.listing_price,
+            platform_fee_percent: feePercent,
+            platform_fee_amount: feeAmount,
+            status: 'completed',
+          },
+        ]);
+        results.marketplace_transactions = 1;
+      }
+    } catch {
+      // tabela pode não existir
+    }
+
+    // Ad Impressions (impressões de exemplo)
+    try {
+      const { data: campaigns } = await supabase.from('ad_campaigns').select('id').eq('is_active', true).limit(1);
+      if (campaigns && campaigns.length > 0) {
+        await supabase.from('ad_impressions').insert([
+          { campaign_id: campaigns[0].id, user_id: userId, category_shown: 'Informática', clicked: false },
+          { campaign_id: campaigns[0].id, user_id: userId, category_shown: 'Celulares', clicked: true },
+        ]);
+        results.ad_impressions = 2;
+      }
+    } catch {
+      // tabela pode não existir
+    }
+
+    // Referral Tracking (exemplos de indicações)
+    try {
+      await supabase.from('referral_tracking').insert([
+        { referrer_id: userId, referred_email: 'amigo1@email.com', status: 'signed_up', signed_up_at: baseDate(-10) },
+        { referrer_id: userId, referred_email: 'amigo2@email.com', status: 'converted', signed_up_at: baseDate(-20), converted_at: baseDate(-15) },
+      ]);
+      results.referral_tracking = 2;
+    } catch {
+      // tabela pode não existir ou já tem dados
     }
 
     return NextResponse.json({

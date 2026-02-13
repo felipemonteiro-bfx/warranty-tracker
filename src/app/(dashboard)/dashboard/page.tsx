@@ -335,7 +335,7 @@ export default function DashboardPage() {
             {/* Anúncios Segmentados */}
             {warranties.length > 0 && (
               <div className="col-span-full mb-6">
-                <AdBanner userCategories={[...new Set(warranties.map(w => w.category).filter(Boolean))]} />
+                <AdBanner userCategories={[...new Set(warranties.map(w => w.category).filter((c): c is string => Boolean(c)))]} />
               </div>
             )}
             

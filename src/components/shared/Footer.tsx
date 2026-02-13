@@ -25,14 +25,15 @@ export const Footer = () => {
           </div>
 
           {/* Coluna 2: Institucional */}
-          <div className="space-y-4">
+          <nav className="space-y-4" aria-label="Links institucionais">
             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Institucional</h4>
             <ul className="space-y-2 text-sm font-bold text-slate-600">
-              <li className="hover:text-emerald-600 cursor-pointer transition-colors">Termos de Uso</li>
-              <li className="hover:text-emerald-600 cursor-pointer transition-colors">Privacidade</li>
-              <li className="hover:text-emerald-600 cursor-pointer transition-colors">Compliance</li>
+              <li><a href="/institucional" className="hover:text-emerald-600 transition-colors" aria-label="Sobre a empresa Guardião de Notas">Sobre Nós</a></li>
+              <li><a href="/terms" className="hover:text-emerald-600 transition-colors" aria-label="Termos e condições de uso">Termos de Uso</a></li>
+              <li><a href="/privacy" className="hover:text-emerald-600 transition-colors" aria-label="Política de privacidade e proteção de dados">Privacidade</a></li>
+              <li><a href="/compliance" className="hover:text-emerald-600 transition-colors" aria-label="Compliance e conformidade regulatória">Compliance</a></li>
             </ul>
-          </div>
+          </nav>
 
           {/* Coluna 3: Fale Conosco */}
           <div className="md:col-span-2 space-y-6">
@@ -45,7 +46,7 @@ export const Footer = () => {
                   </div>
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase">E-mail</p>
-                    <p className="text-xs font-bold text-slate-700">suporte@guardiaonotas.com.br</p>
+                    <a href="mailto:felipe.monteiro@softlive.dev" className="text-xs font-bold text-slate-700 hover:text-emerald-600 transition-colors">felipe.monteiro@softlive.dev</a>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 group">
@@ -54,7 +55,7 @@ export const Footer = () => {
                   </div>
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase">Telefone</p>
-                    <p className="text-xs font-bold text-slate-700">(11) 9999-9999</p>
+                    <a href="tel:+5592993276765" className="text-xs font-bold text-slate-700 hover:text-emerald-600 transition-colors">(92) 99327-6765</a>
                   </div>
                 </div>
               </div>

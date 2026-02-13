@@ -22,6 +22,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [loans, setLoans] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loanForm, setLoanForm] = useState({ borrower_name: '', borrower_contact: '', expected_return_date: '' });
+  const [creatingListing, setCreatingListing] = useState(false);
+  const [existingListing, setExistingListing] = useState<any>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -43,8 +45,47 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
     const { data: loanData } = await supabase.from('lending_logs').select('*').eq('warranty_id', id).order('lent_at', { ascending: false });
     setLoans(loanData || []);
+
+    // Verificar se já existe um anúncio ativo para este produto
+    if (user) {
+      const { data: listingData } = await supabase
+        .from('marketplace_listings')
+        .select('*')
+        .eq('warranty_id', id)
+        .eq('status', 'active')
+        .single();
+      setExistingListing(listingData);
+    }
     
     setLoading(false);
+  };
+
+  const handleCreateMarketplaceListing = async () => {
+    if (!warranty.estimated_sale_value) {
+      toast.error('Defina o valor de revenda estimado antes de anunciar!');
+      return;
+    }
+    setCreatingListing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Você precisa estar logado para anunciar.');
+        return;
+      }
+      const { error } = await supabase.from('marketplace_listings').insert({
+        user_id: user.id,
+        warranty_id: warranty.id,
+        listing_price: warranty.estimated_sale_value,
+        status: 'active'
+      });
+      if (error) throw error;
+      toast.success('Anúncio criado com sucesso!');
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao criar anúncio');
+    } finally {
+      setCreatingListing(false);
+    }
   };
 
   const handleAddLoan = async (e: React.FormEvent) => {
@@ -185,6 +226,65 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
             <h4 className="text-2xl font-black uppercase tracking-tighter">Selo Guardião</h4>
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mt-1">Integridade Digital Verificada</p>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
+            <CardHeader className="p-6 pb-2">
+              <CardTitle className="text-sm font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-emerald-600" /> Valores do Produto
+              </CardTitle>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Informações financeiras</p>
+            </CardHeader>
+            <CardContent className="p-6 pt-2 space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-white/5">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Valor de Compra</span>
+                  <span className="text-lg font-black text-slate-900 dark:text-white">
+                    {warranty.price ? `R$ ${Number(warranty.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '---'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-white/5">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Data da Compra</span>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    {formatDate(warranty.purchase_date)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Valor de Revenda Estimado</span>
+                  <span className="text-xl font-black text-emerald-600">
+                    {warranty.estimated_sale_value ? `R$ ${Number(warranty.estimated_sale_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não definido'}
+                  </span>
+                </div>
+              </div>
+              {warranty.estimated_sale_value && (
+                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+                  {existingListing ? (
+                    <Link href="/marketplace">
+                      <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl">
+                        <ShoppingCart className="h-4 w-4 mr-2" /> Ver Anúncio no Marketplace
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button 
+                      onClick={handleCreateMarketplaceListing}
+                      disabled={creatingListing}
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl"
+                    >
+                      {creatingListing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Criando...
+                        </>
+                      ) : (
+                        <>
+                          <Megaphone className="h-4 w-4 mr-2" /> Anunciar no Marketplace
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 text-center">Taxa de plataforma: 5% sobre a venda</p>
+                </div>
+              )}
+            </CardContent>
           </Card>
 
           <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">

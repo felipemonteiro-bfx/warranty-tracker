@@ -143,7 +143,7 @@ export default function Home() {
         {/* Footer Master */}
         <footer className="mt-40 pt-20 border-t border-slate-100 dark:border-white/5 flex flex-col items-center space-y-12">
           <div className="flex flex-wrap justify-center gap-12 text-sm font-black text-slate-400 uppercase tracking-widest">
-            <div className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer"><Mail className="h-4 w-4" /> help@guardiaonotas.com.br</div>
+            <a href="mailto:felipe.monteiro@softlive.dev" className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer"><Mail className="h-4 w-4" /> felipe.monteiro@softlive.dev</a>
             <div className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer"><Landmark className="h-4 w-4" /> Auditado Digitalmente</div>
             <div className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer"><ShieldCheck className="h-4 w-4" /> Criptografia AES-256</div>
           </div>

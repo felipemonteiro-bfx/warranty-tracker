@@ -6,7 +6,7 @@ import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Upload, Save, X, Sparkles, Loader2, Store, DollarSign, NotebookPen, FolderOpen, Wrench, Key, CreditCard, Hash, Globe2, FileSearch } from 'lucide-react';
+import { Upload, Save, X, Sparkles, Loader2, Store, DollarSign, NotebookPen, FolderOpen, Wrench, Key, CreditCard, Hash, Globe2, FileSearch, Camera } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { normalizeError, getUserFriendlyMessage, logError } from '@/lib/error-handler';
 import { logger } from '@/lib/logger';
@@ -29,6 +29,7 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
     price: initialData?.price || '',
     currency: initialData?.currency || 'BRL',
     original_price: initialData?.original_price || '',
+    estimated_sale_value: initialData?.estimated_sale_value || '',
     store: initialData?.store || '',
     notes: initialData?.notes || '',
     folder: initialData?.folder || 'Pessoal',
@@ -43,8 +44,19 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
     card_brand: initialData?.card_brand || '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    // Detectar se está em dispositivo móvel
+    const checkMobile = () => {
+      setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleAIAnalysis = async () => {
     if (!file) {
@@ -118,24 +130,59 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação básica
+    if (!formData.name || formData.name.trim().length === 0) {
+      toast.error('Por favor, informe o nome do ativo.');
+      return;
+    }
+    
+    if (!formData.purchase_date) {
+      toast.error('Por favor, informe a data de compra.');
+      return;
+    }
+    
+    if (!formData.warranty_months || formData.warranty_months < 1) {
+      toast.error('Por favor, informe a duração da garantia em meses.');
+      return;
+    }
+    
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Não autenticado');
+      if (!user) {
+        toast.error('Você precisa estar autenticado para salvar.');
+        router.push('/login');
+        return;
+      }
       let invoice_url = initialData?.invoice_url || null;
       if (file) {
         const filePath = `${user.id}/${Math.random()}.${file.name.split('.').pop()}`;
-        await supabase.storage.from('invoices').upload(filePath, file);
+        const { error: uploadError } = await supabase.storage.from('invoices').upload(filePath, file);
+        if (uploadError) {
+          logError(normalizeError(uploadError));
+          throw new Error('Erro ao fazer upload do arquivo. Tente novamente.');
+        }
         invoice_url = supabase.storage.from('invoices').getPublicUrl(filePath).data.publicUrl;
       }
       const { error } = initialData?.id 
         ? await supabase.from('warranties').update({ ...formData, invoice_url }).eq('id', initialData.id)
         : await supabase.from('warranties').insert({ ...formData, user_id: user.id, invoice_url });
-      if (error) throw error;
+      if (error) {
+        logError(normalizeError(error));
+        const friendlyMessage = getUserFriendlyMessage(normalizeError(error));
+        throw new Error(friendlyMessage);
+      }
       toast.success('Nota salva com sucesso!');
       router.push('/dashboard');
       router.refresh();
-    } catch (err: any) { toast.error(err.message); } finally { setLoading(false); }
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erro ao salvar. Tente novamente.';
+      toast.error(errorMessage);
+      logError(normalizeError(err));
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -144,11 +191,64 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-10">
           <div className="space-y-4">
             <h2 className="text-lg font-black text-emerald-800 dark:text-emerald-400 flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-emerald-600" /> Upload de Documento</h2>
-            <div className="group relative border-2 border-dashed border-teal-100 dark:border-white/5 rounded-3xl p-10 transition-all hover:border-emerald-400 hover:bg-emerald-50/30 flex flex-col items-center gap-4 text-center">
-              <input type="file" id="file-upload" className="absolute inset-0 opacity-0 cursor-pointer z-20" accept="image/*,.pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-              <div className="h-20 w-20 rounded-2xl bg-teal-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm"><Upload className="h-10 w-10" /></div>
+            
+            {/* Opções Mobile: Câmera e Galeria */}
+            {isMobile && !file && (
+              <div className="grid grid-cols-2 gap-4">
+                <label htmlFor="camera-upload" className="group relative border-2 border-dashed border-emerald-200 dark:border-emerald-800 rounded-2xl p-6 transition-all hover:border-emerald-400 hover:bg-emerald-50/30 flex flex-col items-center gap-3 text-center cursor-pointer">
+                  <input 
+                    type="file" 
+                    id="camera-upload" 
+                    className="hidden" 
+                    accept="image/*" 
+                    capture="environment"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)} 
+                  />
+                  <div className="h-16 w-16 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                    <Camera className="h-8 w-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-slate-700 dark:text-slate-200">Tirar Foto</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Usar câmera</p>
+                  </div>
+                </label>
+                
+                <label htmlFor="gallery-upload" className="group relative border-2 border-dashed border-teal-100 dark:border-white/5 rounded-2xl p-6 transition-all hover:border-emerald-400 hover:bg-emerald-50/30 flex flex-col items-center gap-3 text-center cursor-pointer">
+                  <input 
+                    type="file" 
+                    id="gallery-upload" 
+                    className="hidden" 
+                    accept="image/*,.pdf"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)} 
+                  />
+                  <div className="h-16 w-16 rounded-xl bg-teal-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                    <Upload className="h-8 w-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-slate-700 dark:text-slate-200">Galeria</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Escolher arquivo</p>
+                  </div>
+                </label>
+              </div>
+            )}
+
+            {/* Upload Desktop ou após seleção */}
+            <div className={`group relative border-2 border-dashed border-teal-100 dark:border-white/5 rounded-3xl p-10 transition-all hover:border-emerald-400 hover:bg-emerald-50/30 flex flex-col items-center gap-4 text-center ${isMobile && !file ? 'hidden' : ''}`}>
+              <input 
+                type="file" 
+                id="file-upload" 
+                className="absolute inset-0 opacity-0 cursor-pointer z-20" 
+                accept="image/*,.pdf" 
+                capture={isMobile ? "environment" : undefined}
+                onChange={(e) => setFile(e.target.files?.[0] || null)} 
+              />
+              <div className="h-20 w-20 rounded-2xl bg-teal-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                {isMobile ? <Camera className="h-10 w-10" /> : <Upload className="h-10 w-10" />}
+              </div>
               <div className="space-y-1">
-                <p className="font-black text-slate-700 dark:text-slate-200">{file ? file.name : 'Clique ou arraste a nota fiscal'}</p>
+                <p className="font-black text-slate-700 dark:text-slate-200">
+                  {file ? file.name : (isMobile ? 'Tire uma foto ou escolha da galeria' : 'Clique ou arraste a nota fiscal')}
+                </p>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suporta JPG, PNG e PDF</p>
               </div>
               <AnimatePresence>
@@ -163,24 +263,42 @@ export const WarrantyForm = ({ initialData }: WarrantyFormProps) => {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Preview da imagem capturada */}
+            {file && file.type.startsWith('image/') && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative rounded-2xl overflow-hidden border-2 border-emerald-200 dark:border-emerald-800"
+              >
+                <img 
+                  src={URL.createObjectURL(file)} 
+                  alt="Preview da nota fiscal" 
+                  className="w-full h-auto max-h-96 object-contain"
+                />
+              </motion.div>
+            )}
           </div>
 
           <div className="space-y-12">
             <section className="space-y-6">
               <h3 className="text-sm font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2"><div className="h-4 w-1 bg-emerald-600 rounded-full" /> Dados Automatizados</h3>
-              <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
                 <Input label="Nome do Ativo" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Loja" value={formData.store} onChange={(e) => setFormData({ ...formData, store: e.target.value })} />
-                  <Input label="Valor (R$)" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 ml-1"><CreditCard className="h-4 w-4 text-emerald-600" /> Cartão Utilizado</label>
-                  <Input placeholder="Extraído pela IA" value={formData.card_brand} onChange={(e) => setFormData({ ...formData, card_brand: e.target.value })} />
+                  <Input label="Valor de Compra (R$)" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="Data Compra" type="date" value={formData.purchase_date} onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })} required />
+                  <Input label="Data da Compra" type="date" value={formData.purchase_date} onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })} required />
                   <Input label="Garantia (Meses)" type="number" value={formData.warranty_months} onChange={(e) => setFormData({ ...formData, warranty_months: parseInt(e.target.value) })} required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 ml-1"><CreditCard className="h-4 w-4 text-emerald-600" /> Cartão Utilizado</label>
+                    <Input placeholder="Extraído pela IA" value={formData.card_brand} onChange={(e) => setFormData({ ...formData, card_brand: e.target.value })} />
+                  </div>
+                  <Input label="Valor de Revenda Estimado (R$)" type="number" step="0.01" value={formData.estimated_sale_value} onChange={(e) => setFormData({ ...formData, estimated_sale_value: e.target.value })} placeholder="Quanto conseguiria vender hoje?" />
                 </div>
               </div>
             </section>

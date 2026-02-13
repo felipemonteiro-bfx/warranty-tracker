@@ -26,14 +26,14 @@ ON CONFLICT (id) DO UPDATE SET
 -- ---------- Garantias ----------
 INSERT INTO public.warranties (
   user_id, name, category, purchase_date, warranty_months,
-  store, price, notes, serial_number, total_saved, invoice_url,
+  store, price, estimated_sale_value, notes, serial_number, total_saved, invoice_url,
   folder, maintenance_frequency_months, last_maintenance_date
 ) VALUES
-  ('SEU_USER_ID_AQUI', 'Notebook Dell Inspiron 15 3000', 'Informática', (CURRENT_DATE - 120)::date, 24, 'Magazine Luiza', 3499.90, 'Compra Black Friday. Inclui mouse e mochila.', 'DL123456789BR', 0, NULL, 'Pessoal', 6, (CURRENT_DATE - 30)::date),
-  ('SEU_USER_ID_AQUI', 'iPhone 14 Pro 128GB', 'Celulares', (CURRENT_DATE - 200)::date, 12, 'Apple Store', 7499.00, 'Apple Care+ até dez/2025.', 'DNQP12ABC34', 150, NULL, 'Pessoal', 12, (CURRENT_DATE - 90)::date),
-  ('SEU_USER_ID_AQUI', 'Geladeira Brastemp Frost Free', 'Eletrodomésticos', (CURRENT_DATE - 400)::date, 36, 'Casas Bahia', 2899.00, 'Instalação incluída. Porta reversível.', 'BRF2023123456', 0, NULL, 'Casa', 12, (CURRENT_DATE - 180)::date),
-  ('SEU_USER_ID_AQUI', 'Smart TV Samsung 55" QLED', 'TV e Vídeo', (CURRENT_DATE - 60)::date, 12, 'Americanas', 4299.00, 'Garantia estendida 2 anos na loja.', 'SN55Q70T2024', 0, NULL, 'Pessoal', 6, (CURRENT_DATE - 20)::date),
-  ('SEU_USER_ID_AQUI', 'Furadeira Bosch GSB 21-2 RCT', 'Ferramentas', (CURRENT_DATE - 30)::date, 24, 'Leroy Merlin', 599.90, 'Kit com maleta e acessórios.', 'BOS2024XYZ789', 0, NULL, 'Oficina', 24, NULL);
+  ('SEU_USER_ID_AQUI', 'Notebook Dell Inspiron 15 3000', 'Informática', (CURRENT_DATE - 120)::date, 24, 'Magazine Luiza', 3499.90, 2899.00, 'Compra Black Friday. Inclui mouse e mochila.', 'DL123456789BR', 0, NULL, 'Pessoal', 6, (CURRENT_DATE - 30)::date),
+  ('SEU_USER_ID_AQUI', 'iPhone 14 Pro 128GB', 'Celulares', (CURRENT_DATE - 200)::date, 12, 'Apple Store', 7499.00, 6499.00, 'Apple Care+ até dez/2025.', 'DNQP12ABC34', 150, NULL, 'Pessoal', 12, (CURRENT_DATE - 90)::date),
+  ('SEU_USER_ID_AQUI', 'Geladeira Brastemp Frost Free', 'Eletrodomésticos', (CURRENT_DATE - 400)::date, 36, 'Casas Bahia', 2899.00, 2199.00, 'Instalação incluída. Porta reversível.', 'BRF2023123456', 0, NULL, 'Casa', 12, (CURRENT_DATE - 180)::date),
+  ('SEU_USER_ID_AQUI', 'Smart TV Samsung 55" QLED', 'TV e Vídeo', (CURRENT_DATE - 60)::date, 12, 'Americanas', 4299.00, 3899.00, 'Garantia estendida 2 anos na loja.', 'SN55Q70T2024', 0, NULL, 'Pessoal', 6, (CURRENT_DATE - 20)::date),
+  ('SEU_USER_ID_AQUI', 'Furadeira Bosch GSB 21-2 RCT', 'Ferramentas', (CURRENT_DATE - 30)::date, 24, 'Leroy Merlin', 599.90, 549.90, 'Kit com maleta e acessórios.', 'BOS2024XYZ789', 0, NULL, 'Oficina', 24, NULL);
 
 -- ---------- Notifications ----------
 INSERT INTO public.notifications (user_id, title, message, read) VALUES

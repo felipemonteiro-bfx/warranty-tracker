@@ -31,6 +31,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='warranties' AND column_name='last_maintenance_date') THEN
     ALTER TABLE public.warranties ADD COLUMN last_maintenance_date date;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='warranties' AND column_name='estimated_sale_value') THEN
+    ALTER TABLE public.warranties ADD COLUMN estimated_sale_value numeric;
+  END IF;
 END $$;
 
 -- Colunas extras em profiles (inclui nickname/avatar_url/status para quem usa setup completo)
@@ -62,6 +65,36 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='legacy_enabled') THEN
     ALTER TABLE public.profiles ADD COLUMN legacy_enabled boolean DEFAULT false;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='phone') THEN
+    ALTER TABLE public.profiles ADD COLUMN phone text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='address_street') THEN
+    ALTER TABLE public.profiles ADD COLUMN address_street text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='address_number') THEN
+    ALTER TABLE public.profiles ADD COLUMN address_number text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='address_complement') THEN
+    ALTER TABLE public.profiles ADD COLUMN address_complement text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='address_neighborhood') THEN
+    ALTER TABLE public.profiles ADD COLUMN address_neighborhood text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='address_city') THEN
+    ALTER TABLE public.profiles ADD COLUMN address_city text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='address_state') THEN
+    ALTER TABLE public.profiles ADD COLUMN address_state text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='address_zipcode') THEN
+    ALTER TABLE public.profiles ADD COLUMN address_zipcode text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='birth_date') THEN
+    ALTER TABLE public.profiles ADD COLUMN birth_date date;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='gender') THEN
+    ALTER TABLE public.profiles ADD COLUMN gender text;
   END IF;
 END $$;
 

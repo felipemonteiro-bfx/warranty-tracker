@@ -25,7 +25,7 @@ export default async function DashboardLayout({
     <DashboardClientWrapper>
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
-        <main className="container mx-auto p-4 md:p-8 flex-1">
+        <main className="container mx-auto p-4 md:p-6 lg:p-8 flex-1 pb-28 lg:pb-8">
           {children}
         </main>
         <Footer />

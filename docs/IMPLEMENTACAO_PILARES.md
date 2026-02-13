@@ -95,8 +95,8 @@
    ```
 
 2. **Cadastrar dados iniciais:**
-   - Parceiros de seguro em `insurance_partners`
-   - Campanhas de teste em `ad_campaigns`
+   - ✅ **JÁ INCLUÍDO NO SEED MOCK** — Parceiros de seguro e campanhas são criados automaticamente
+   - Use o botão "Dados de teste" no dashboard ou execute `docs/seed_mock_data.sql`
 
 3. **Implementar funcionalidades faltantes:**
    - Fluxo de fechar venda no marketplace
@@ -116,3 +116,25 @@
 - **Marketplace:** Taxa de 5% por venda
 - **Anúncios:** CPM/CPC (configurável por campanha)
 - **Referral:** Meses grátis para quem indica
+
+---
+
+## 📊 DADOS MOCK COMPLETOS
+
+✅ **Todos os dados estão mockados:**
+- 5 garantias completas
+- 3 notificações
+- 4 logs de manutenção
+- 2 empréstimos
+- 2 compartilhamentos
+- 2 anúncios marketplace
+- 1 sinistro
+- 3 parceiros de seguro
+- 2 cotações de seguro
+- 2 anunciantes e campanhas
+- 2 impressões de anúncios
+- 1 transação marketplace
+- 2 referrals de exemplo
+- Referral code gerado
+
+**Como usar:** Botão "Dados de teste" no dashboard ou `docs/seed_mock_data.sql`

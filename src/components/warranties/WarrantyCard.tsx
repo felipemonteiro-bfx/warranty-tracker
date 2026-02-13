@@ -130,7 +130,18 @@ export const WarrantyCard = memo(({ warranty }: { warranty: Warranty }) => {
   }, [isExpired, isExpiringSoon]);
 
   return (
-    <motion.div whileHover={{ y: -8 }} className="group">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 20,
+        hover: { duration: 0.2 }
+      }}
+      className="group"
+    >
       <Card className={`h-full border-t-4 ${isExpired ? 'border-t-red-500' : isExpiringSoon ? 'border-t-amber-500' : 'border-t-emerald-500'} shadow-sm hover:shadow-2xl transition-all duration-500`}>
         <CardHeader className="flex flex-row items-start justify-between pb-2">
           <div className="space-y-1">
@@ -142,32 +153,49 @@ export const WarrantyCard = memo(({ warranty }: { warranty: Warranty }) => {
             </CardTitle>
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter"><Store className="h-3.5 w-3.5" /> {warranty.store || 'Loja não informada'}</div>
           </div>
-          <div className="flex gap-1">
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex gap-1"
+          >
             {!isExpired && (
-              <Button variant="ghost" size="sm" onClick={exportResalePDF} className="h-8 w-8 p-0" title="Dossiê de Revenda">
-                <FileBadge className="h-4 w-4 text-emerald-600" />
-              </Button>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="ghost" size="sm" onClick={exportResalePDF} className="h-8 w-8 p-0" title="Dossiê de Revenda">
+                  <FileBadge className="h-4 w-4 text-emerald-600" />
+                </Button>
+              </motion.div>
             )}
             {!isExpired && (
-              <Button variant="ghost" size="sm" onClick={() => router.push(`/insurance/simulator/${warranty.id}`)} className="h-8 w-8 p-0" title="Simular Seguro">
-                <Umbrella className="h-4 w-4 text-cyan-600" />
-              </Button>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="ghost" size="sm" onClick={() => router.push(`/insurance/simulator/${warranty.id}`)} className="h-8 w-8 p-0" title="Simular Seguro">
+                  <Umbrella className="h-4 w-4 text-cyan-600" />
+                </Button>
+              </motion.div>
             )}
             {!isExpired && (
-              <Button variant="ghost" size="sm" onClick={handleLogSaving} className="h-8 w-8 p-0" title="Registrar Economia">
-                <HeartHandshake className="h-4 w-4 text-pink-500" />
-              </Button>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="ghost" size="sm" onClick={handleLogSaving} className="h-8 w-8 p-0" title="Registrar Economia">
+                  <HeartHandshake className="h-4 w-4 text-pink-500" />
+                </Button>
+              </motion.div>
             )}
-            <Button variant="ghost" size="sm" onClick={handleShare} className="h-8 w-8 p-0" title="Compartilhar">
-              <Share2 className="h-4 w-4 text-slate-400 hover:text-emerald-600" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => router.push(`/products/edit/${warranty.id}`)} className="h-8 w-8 p-0" title="Editar">
-              <Pencil className="h-4 w-4 text-slate-400 hover:text-emerald-600" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleDelete} className="h-8 w-8 p-0" title="Excluir">
-              <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
-            </Button>
-          </div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="ghost" size="sm" onClick={handleShare} className="h-8 w-8 p-0" title="Compartilhar">
+                <Share2 className="h-4 w-4 text-slate-400 hover:text-emerald-600" />
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="ghost" size="sm" onClick={() => router.push(`/products/edit/${warranty.id}`)} className="h-8 w-8 p-0" title="Editar">
+                <Pencil className="h-4 w-4 text-slate-400 hover:text-emerald-600" />
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="ghost" size="sm" onClick={handleDelete} className="h-8 w-8 p-0" title="Excluir">
+                <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
+              </Button>
+            </motion.div>
+          </motion.div>
         </CardHeader>
 
         <CardContent className="space-y-6 pt-4">

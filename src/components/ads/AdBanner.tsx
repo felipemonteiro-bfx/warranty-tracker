@@ -119,16 +119,41 @@ export function AdBanner({ userCategories = [], className = '' }: AdBannerProps)
           onClick={handleClick}
           className="cursor-pointer p-6 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
         >
-          {ad.image_url && (
-            <div className="relative h-16 w-16 rounded-xl overflow-hidden shrink-0">
-              <Image
-                src={ad.image_url}
-                alt={ad.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-          )}
+          <div className="relative h-16 w-16 rounded-xl overflow-hidden shrink-0 bg-slate-100">
+            {ad.image_url ? (
+              <>
+                <Image
+                  src={ad.image_url}
+                  alt={ad.name}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const fallback = parent.querySelector('.ad-image-fallback');
+                      if (fallback) {
+                        (fallback as HTMLElement).style.display = 'flex';
+                      }
+                    }
+                  }}
+                />
+                <div className="ad-image-fallback absolute inset-0 flex items-center justify-center bg-slate-100" style={{ display: 'none' }}>
+                  <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Patrocinado</p>
             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate">

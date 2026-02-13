@@ -11,10 +11,31 @@ export const Footer = () => {
           {/* Coluna 1: Logo e Descrição */}
           <div className="md:col-span-1 space-y-6">
             <div className="flex items-center gap-2">
-              <div className="relative h-8 w-8 overflow-hidden rounded-lg">
-                <Image src={logoUrl} alt="Logo" fill className="object-cover" unoptimized />
+              <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-emerald-600 shrink-0">
+                <Image 
+                  src={logoUrl} 
+                  alt="Logo Guardião de Notas" 
+                  fill 
+                  className="object-cover" 
+                  unoptimized
+                  sizes="32px"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const fallback = parent.querySelector('.logo-fallback');
+                      if (fallback) {
+                        (fallback as HTMLElement).style.display = 'flex';
+                      }
+                    }
+                  }}
+                />
+                <div className="logo-fallback absolute inset-0 flex items-center justify-center bg-emerald-600" style={{ display: 'none' }}>
+                  <ShieldCheck className="h-5 w-5 text-white" />
+                </div>
               </div>
-              <span className="text-lg font-black text-slate-900">Guardião<span className="text-emerald-600">.</span></span>
+              <span className="text-lg font-black text-slate-900 dark:text-white">Guardião<span className="text-emerald-600">.</span></span>
             </div>
             <p className="text-xs text-slate-500 font-medium leading-relaxed">
               A maior plataforma de inteligência e gestão de garantias do Brasil. Protegendo seu patrimônio com tecnologia.

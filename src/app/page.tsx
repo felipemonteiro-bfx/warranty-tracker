@@ -69,7 +69,31 @@ export default function Home() {
               </Button>
             </Link>
             <div className="flex -space-x-3">
-              {[1,2,3,4].map(i => <div key={i} className="h-12 w-12 rounded-full border-4 border-white dark:border-slate-950 bg-slate-200 overflow-hidden shadow-xl"><Image src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" width={100} height={100} /></div>)}
+              {[1,2,3,4].map(i => (
+                <div key={i} className="relative h-12 w-12 rounded-full border-4 border-white dark:border-slate-950 bg-slate-200 overflow-hidden shadow-xl">
+                  <Image 
+                    src={`https://i.pravatar.cc/100?img=${i+10}`} 
+                    alt={`Usuário ${i}`} 
+                    width={48} 
+                    height={48}
+                    className="object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        const fallback = parent.querySelector('.avatar-fallback');
+                        if (fallback) {
+                          (fallback as HTMLElement).style.display = 'flex';
+                        }
+                      }
+                    }}
+                  />
+                  <div className="avatar-fallback absolute inset-0 flex items-center justify-center bg-slate-300" style={{ display: 'none' }}>
+                    <Users className="h-6 w-6 text-slate-500" />
+                  </div>
+                </div>
+              ))}
               <div className="h-12 px-4 rounded-full border-4 border-white dark:border-slate-950 bg-slate-900 flex items-center justify-center text-[10px] font-black text-emerald-400 shadow-xl">+12k</div>
             </div>
           </motion.div>

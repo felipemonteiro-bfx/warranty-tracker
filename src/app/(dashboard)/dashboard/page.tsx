@@ -211,32 +211,51 @@ export default function DashboardPage() {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard
-            label="Total"
-            value={stats.total}
-            icon={<ShieldCheck className="h-5 w-5" />}
-            color="emerald"
-          />
-          <StatCard
-            label="Ativas"
-            value={stats.active}
-            icon={<ShieldCheck className="h-5 w-5" />}
-            color="emerald"
-          />
-          <StatCard
-            label="Vencendo"
-            value={stats.expiring}
-            icon={<ShieldAlert className="h-5 w-5" />}
-            color="amber"
-          />
-          <StatCard
-            label="Expiradas"
-            value={stats.expired}
-            icon={<ShieldX className="h-5 w-5" />}
-            color="red"
-          />
-        </div>
+        <motion.div 
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            visible: {
+              transition: {
+                staggerChildren: 0.1
+              }
+            }
+          }}
+        >
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <StatCard
+              label="Total"
+              value={stats.total}
+              icon={<ShieldCheck className="h-5 w-5" />}
+              color="emerald"
+            />
+          </motion.div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <StatCard
+              label="Ativas"
+              value={stats.active}
+              icon={<ShieldCheck className="h-5 w-5" />}
+              color="emerald"
+            />
+          </motion.div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <StatCard
+              label="Vencendo"
+              value={stats.expiring}
+              icon={<ShieldAlert className="h-5 w-5" />}
+              color="amber"
+            />
+          </motion.div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <StatCard
+              label="Expiradas"
+              value={stats.expired}
+              icon={<ShieldX className="h-5 w-5" />}
+              color="red"
+            />
+          </motion.div>
+        </motion.div>
 
         {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row gap-4">
@@ -339,18 +358,40 @@ export default function DashboardPage() {
               </div>
             )}
             
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+            <motion.div 
+              className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.08,
+                    delayChildren: 0.1
+                  }
+                }
+              }}
+            >
               {warranties.map((warranty, index) => (
                 <motion.div
                   key={warranty.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  variants={{
+                    hidden: { opacity: 0, y: 30, scale: 0.9 },
+                    visible: { 
+                      opacity: 1, 
+                      y: 0, 
+                      scale: 1,
+                      transition: {
+                        type: "spring",
+                        stiffness: 100,
+                        damping: 15
+                      }
+                    }
+                  }}
                 >
                   <WarrantyCard warranty={warranty} />
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </>
         )}
       </div>
@@ -366,13 +407,36 @@ const StatCard = memo(({ label, value, icon, color }: { label: string; value: nu
   };
 
   return (
-    <div className={`p-6 rounded-2xl border ${colorClasses[color]}`}>
+    <motion.div
+      whileHover={{ scale: 1.05, y: -4 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className={`p-6 rounded-2xl border ${colorClasses[color]} cursor-pointer`}
+    >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-bold uppercase tracking-wider">{label}</span>
-        {icon}
+        <motion.span
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="text-sm font-bold uppercase tracking-wider"
+        >
+          {label}
+        </motion.span>
+        <motion.div
+          initial={{ opacity: 0, rotate: -180 }}
+          animate={{ opacity: 1, rotate: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          {icon}
+        </motion.div>
       </div>
-      <div className="text-3xl font-black">{value}</div>
-    </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+        className="text-3xl font-black"
+      >
+        {value}
+      </motion.div>
+    </motion.div>
   );
 });
 

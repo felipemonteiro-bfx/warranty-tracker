@@ -96,20 +96,37 @@ export function InsurancePartnersCard({ warrantyId }: { warrantyId: string }) {
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {partner.logo_url ? (
-                    <div className="relative h-10 w-10 rounded-lg overflow-hidden shrink-0">
-                      <Image
-                        src={partner.logo_url}
-                        alt={partner.name}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                      <ShieldCheck className="h-5 w-5 text-slate-400" />
-                    </div>
-                  )}
+                  <div className="relative h-10 w-10 rounded-lg overflow-hidden shrink-0 bg-slate-100">
+                    {partner.logo_url ? (
+                      <>
+                        <Image
+                          src={partner.logo_url}
+                          alt={`Logo ${partner.name}`}
+                          fill
+                          className="object-contain p-1"
+                          sizes="40px"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              const fallback = parent.querySelector('.partner-logo-fallback');
+                              if (fallback) {
+                                (fallback as HTMLElement).style.display = 'flex';
+                              }
+                            }
+                          }}
+                        />
+                        <div className="partner-logo-fallback absolute inset-0 flex items-center justify-center bg-slate-100" style={{ display: 'none' }}>
+                          <ShieldCheck className="h-5 w-5 text-slate-400" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <ShieldCheck className="h-5 w-5 text-slate-400" />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-black text-slate-900 uppercase tracking-tighter truncate">
                       {partner.name}

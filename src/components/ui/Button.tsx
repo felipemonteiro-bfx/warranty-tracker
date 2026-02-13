@@ -48,8 +48,18 @@ export const Button = memo(({
 
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
-      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ 
+        scale: 1.03,
+        transition: { duration: 0.2 }
+      }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 20
+      }}
       className={classes}
       {...(props as any)}
     />

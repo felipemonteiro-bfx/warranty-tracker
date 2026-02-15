@@ -68,7 +68,7 @@ create policy "Users can view chats they belong to"
   using (
     exists (
       select 1 from public.chat_participants cp
-      where cp.chat_id = id
+      where cp.chat_id = public.chats.id
       and cp.user_id = auth.uid()
     )
   );

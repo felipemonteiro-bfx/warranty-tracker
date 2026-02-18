@@ -21,13 +21,12 @@ export default function Home() {
       if (session) {
         try {
           router.push('/dashboard');
-        } catch (error) {
-          console.warn('Erro ao redirecionar para dashboard:', error);
+        } catch {
+          // Erro não crítico no redirect
         }
       }
-    }).catch((error) => {
-      console.warn('Erro ao verificar sessão:', error);
-      // Continuar mesmo se houver erro - não bloquear a página inicial
+    }).catch(() => {
+      // Erro ao verificar sessão - continuar com página normal
     });
   }, [router, supabase.auth]);
 

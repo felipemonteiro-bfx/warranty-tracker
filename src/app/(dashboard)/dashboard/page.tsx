@@ -41,7 +41,7 @@ export default function DashboardPage() {
       try {
         router.push('/login');
       } catch (error) {
-        console.warn('Erro ao redirecionar para login:', error);
+        logger.warn('Erro ao redirecionar para login', { error: String(error) });
         window.location.href = '/login';
       }
     }

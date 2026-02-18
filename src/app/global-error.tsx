@@ -2,7 +2,6 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
-import Link from 'next/link';
 
 export default function GlobalError({
   error,
@@ -31,12 +30,13 @@ export default function GlobalError({
           >
             Tentar novamente
           </button>
-          <Link
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
             href="/"
             className="block text-sm text-slate-500 hover:text-emerald-600"
           >
             Voltar ao início
-          </Link>
+          </a>
         </div>
       </body>
     </html>

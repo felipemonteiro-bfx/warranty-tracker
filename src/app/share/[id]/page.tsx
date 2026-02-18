@@ -16,16 +16,16 @@ export default function PublicSharePage({ params }: { params: Promise<{ id: stri
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase
-        .from('warranties')
-        .select('name, purchase_date, store, serial_number, category, price')
-        .eq('id', id)
-        .single();
-      setItem(data);
+      const { data, error } = await supabase.rpc('get_warranty_for_share', { wid: id });
+      if (!error && data) {
+        setItem(data);
+      } else {
+        setItem(null);
+      }
       setLoading(false);
     };
     fetchData();
-  }, [id]);
+  }, [id, supabase]);
 
   if (loading) return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div></div>;
 

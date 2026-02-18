@@ -16,8 +16,7 @@ test.beforeEach(async ({ context, page }) => {
 });
 
 test('has title', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3001');
-  await page.waitForLoadState('networkidle');
+  await page.goto('http://127.0.0.1:3001', { waitUntil: 'domcontentloaded', timeout: 15000 });
   
   // Aceita tanto "Guardião" quanto "Daily Brief" (modo disfarce)
   const title = await page.title();
@@ -26,9 +25,8 @@ test('has title', async ({ page }) => {
 });
 
 test('check for login button or news disguise', async ({ page }) => {
-  await page.goto('http://127.0.0.1:3001');
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(2000); // Aguarda carregar completamente
+  await page.goto('http://127.0.0.1:3001', { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await page.waitForTimeout(2000);
   
   // Verifica se há qualquer conteúdo na página
   const bodyText = await page.textContent('body').catch(() => '');

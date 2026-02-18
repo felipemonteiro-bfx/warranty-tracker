@@ -8,6 +8,8 @@ import { ShoppingBag, Search, Filter, ShieldCheck, BadgeCheck, ArrowRight, Loade
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+import { SectionErrorBoundary } from '@/components/shared/SectionErrorBoundary';
 
 export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
@@ -26,13 +28,13 @@ export default function MarketplacePage() {
         .select('*, warranties(name, category)');
 
       if (error) {
-        console.error('Marketplace Query Error:', error);
+        logger.error('Marketplace Query Error', error as Error);
         setListings([]);
       } else {
         setListings(data || []);
       }
     } catch (err) {
-      console.error('Marketplace Catch Error:', err);
+      logger.error('Marketplace Catch Error', err as Error);
     } finally {
       setLoading(false);
     }
@@ -45,6 +47,7 @@ export default function MarketplacePage() {
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-emerald-600" /></div>;
 
   return (
+    <SectionErrorBoundary sectionName="marketplace">
     <div className="max-w-7xl mx-auto space-y-12 pb-20 px-4 md:px-0">
       <header className="flex flex-col md:flex-row justify-between items-start gap-6">
         <div className="space-y-1">
@@ -53,6 +56,11 @@ export default function MarketplacePage() {
           <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Ao vender, aplica-se uma taxa de 5% para a plataforma.</p>
         </div>
         <div className="flex gap-3">
+          <Link href="/marketplace/ofertas">
+            <Button variant="outline" size="sm" className="gap-2">
+              <MessageCircle className="h-4 w-4" /> Minhas ofertas
+            </Button>
+          </Link>
           <div className="px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
             <BadgeCheck className="h-4 w-4" /> 100% Auditado
           </div>
@@ -92,9 +100,9 @@ export default function MarketplacePage() {
                   </div>
                   <div className="pt-4 border-t border-slate-50 dark:border-white/5 flex items-center justify-between mt-auto">
                     <p className="text-xl font-black text-slate-900 dark:text-white">R$ {Number(item.listing_price).toLocaleString('pt-BR')}</p>
-                    <Link href={`/share/${item.id}`}>
+                    <Link href={`/marketplace/${item.id}`}>
                       <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-full bg-slate-50 dark:bg-white/5 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all">
-                        <ArrowRight className="h-4.5 w-4.5" />
+                        <MessageCircle className="h-4.5 w-4.5" />
                       </Button>
                     </Link>
                   </div>
@@ -122,5 +130,6 @@ export default function MarketplacePage() {
         </div>
       </Card>
     </div>
+    </SectionErrorBoundary>
   );
 }

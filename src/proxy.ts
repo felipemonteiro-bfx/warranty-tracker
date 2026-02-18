@@ -14,8 +14,8 @@ export async function proxy(request: NextRequest) {
     supabaseResponse = NextResponse.next({ request });
   }
 
-  // Rate limiting para rotas de API (pular em modo de teste)
-  const isTestMode = request.cookies.get('test-bypass')?.value === 'true';
+  // Rate limiting para rotas de API (pular em modo de teste, APENAS em development)
+  const isTestMode = process.env.NODE_ENV === 'development' && request.cookies.get('test-bypass')?.value === 'true';
   
   if (!isTestMode && request.nextUrl.pathname.startsWith('/api/')) {
     try {

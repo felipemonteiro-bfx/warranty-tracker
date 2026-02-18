@@ -17,6 +17,13 @@ export const mockWarranties: Warranty[] = [
     notes: 'Garantia estendida incluída',
     invoice_url: null,
     created_at: new Date().toISOString(),
+    serial_number: null,
+    total_saved: null,
+    estimated_sale_value: null,
+    folder: null,
+    maintenance_frequency_months: null,
+    last_maintenance_date: null,
+    card_brand: null,
   },
   {
     id: '2',
@@ -30,6 +37,13 @@ export const mockWarranties: Warranty[] = [
     notes: '',
     invoice_url: null,
     created_at: new Date().toISOString(),
+    serial_number: null,
+    total_saved: null,
+    estimated_sale_value: null,
+    folder: null,
+    maintenance_frequency_months: null,
+    last_maintenance_date: null,
+    card_brand: null,
   },
   {
     id: '3',
@@ -43,6 +57,13 @@ export const mockWarranties: Warranty[] = [
     notes: 'Instalação incluída',
     invoice_url: null,
     created_at: new Date().toISOString(),
+    serial_number: null,
+    total_saved: null,
+    estimated_sale_value: null,
+    folder: null,
+    maintenance_frequency_months: null,
+    last_maintenance_date: null,
+    card_brand: null,
   },
   {
     id: '4',
@@ -56,6 +77,13 @@ export const mockWarranties: Warranty[] = [
     notes: '',
     invoice_url: null,
     created_at: new Date().toISOString(),
+    serial_number: null,
+    total_saved: null,
+    estimated_sale_value: null,
+    folder: null,
+    maintenance_frequency_months: null,
+    last_maintenance_date: null,
+    card_brand: null,
   },
 ];
 
@@ -71,6 +99,13 @@ export const mockExpiredWarranty: Warranty = {
   notes: '',
   invoice_url: null,
   created_at: new Date().toISOString(),
+  serial_number: null,
+  total_saved: null,
+  estimated_sale_value: null,
+  folder: null,
+  maintenance_frequency_months: null,
+  last_maintenance_date: null,
+  card_brand: null,
 };
 
 export const mockExpiringSoonWarranty: Warranty = {
@@ -85,6 +120,13 @@ export const mockExpiringSoonWarranty: Warranty = {
   notes: '',
   invoice_url: null,
   created_at: new Date().toISOString(),
+  serial_number: null,
+  total_saved: null,
+  estimated_sale_value: null,
+  folder: null,
+  maintenance_frequency_months: null,
+  last_maintenance_date: null,
+  card_brand: null,
 };
 
 export const mockUser = {

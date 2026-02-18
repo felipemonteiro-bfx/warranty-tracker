@@ -1,31 +1,74 @@
-# 🛡️ WarrantyBfx - Rastreador de Garantias SaaS
+# Guardiao de Notas - Gestao Inteligente de Garantias e Patrimonio
 
-Um aplicativo leve e moderno para você nunca mais perder o prazo de uma garantia. Perfeito para usar no celular e desktop.
+Plataforma web completa para gestao de garantias, notas fiscais e patrimonio com IA integrada.
 
-## 🚀 Como começar
+## Como comecar
 
-### 1. Configuração do Supabase
+### 1. Pre-requisitos
+- Node.js 20+
+- Yarn (`npm install -g yarn`)
+- Conta no [Supabase](https://supabase.com)
+
+### 2. Configuracao do Supabase
 1. Crie um projeto no [Supabase](https://supabase.com).
-2. Vá em **SQL Editor** e cole o script SQL que forneci na conversa.
-3. Vá em **Storage**, crie um bucket chamado `invoices` e deixe-o como **público**.
+2. **SQL Editor** → execute nesta ordem:
+   - `supabase/migrations/20260215220000_create_warranties.sql`
+   - `supabase/migrations/20260217000000_integration_complete.sql`
+3. **Auth** → Providers: ative Email e Google. Redirect URLs: `http://localhost:3001/auth/callback`
+4. **Database** → Replication: ative Realtime para a tabela `warranties`
 
-### 2. Configuração do Projeto
-No arquivo `.env.local`, substitua `SUA_ANON_KEY_AQUI` pela chave que está em **Project Settings > API** no seu painel do Supabase.
+Guia completo: `docs/SUPABASE_SETUP.md`
 
-### 3. Rodar o App
-Abra o terminal na pasta do projeto e digite:
+### Monitoramento de erros (Sentry - gratuito)
+Guia passo a passo: `docs/SENTRY_SETUP.md`
+
+### 3. Variaveis de ambiente
+Copie `.env.example` para `.env.local` e preencha:
+```
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon
+GEMINI_API_KEY=sua-chave-gemini (opcional, para analise IA de notas)
+STRIPE_SECRET_KEY=sk_test_... (opcional, para pagamentos)
+```
+
+### 4. Instalar e rodar
 ```bash
+yarn install
 yarn dev
 ```
-O app estará disponível em `http://localhost:3001`.
+O app estara disponivel em `http://localhost:3001`.
 
-## 📱 Destaques Mobile
-- **Interface Touch-friendly:** Botões e campos largos para facilitar o uso no celular.
-- **Upload Direto:** No celular, ao clicar em "Upload", você pode tirar uma foto da nota fiscal na hora.
-- **Alertas Visuais:** Cores indicam o status (Verde = Ok, Amarelo = Vencendo, Vermelho = Expirado).
+## Funcionalidades principais
 
-## 🛠️ Tecnologias
-- Next.js 14 (App Router)
+- **Gestao de garantias**: Cadastro, filtros, busca, alertas de vencimento
+- **Upload de notas fiscais**: Com analise automatica por IA (Gemini)
+- **Cartao de credito**: Registre o cartao usado e veja beneficios de garantia estendida
+- **Dashboard**: Estatisticas de garantias ativas, vencendo e expiradas
+- **Modo privacidade**: Oculta valores monetarios
+- **PWA**: Instalavel no celular
+- **Dark mode**: Tema claro e escuro
+
+## Tecnologias
+- Next.js 16 (App Router, React 19)
 - Supabase (Auth, Database, Storage)
-- Tailwind CSS (Estilização ultra leve)
-- Lucide React (Ícones)
+- Tailwind CSS v4
+- Google Gemini AI (analise de notas fiscais)
+- Stripe (pagamentos)
+- Playwright (testes E2E)
+
+## Testes E2E
+Guia completo: `docs/TESTES.md`
+```bash
+npm run dev       # Terminal 1: servidor
+npm test          # Terminal 2: testes Playwright
+npm run test:journey  # Apenas jornada do usuario
+```
+
+## Scripts uteis
+```bash
+yarn dev          # Servidor de desenvolvimento
+yarn build        # Build de producao
+yarn test         # Rodar testes E2E
+yarn lint         # Verificar linting
+yarn type-check   # Verificar tipos TypeScript
+```

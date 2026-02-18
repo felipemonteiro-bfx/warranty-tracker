@@ -19,8 +19,7 @@ test.describe('Autenticação', () => {
   });
 
   test('1. Página de login carrega corretamente', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verifica elementos da página de login
     const title = await page.title();
@@ -32,8 +31,7 @@ test.describe('Autenticação', () => {
   });
 
   test('2. Página de signup carrega corretamente', async ({ page }) => {
-    await page.goto(`${BASE_URL}/signup`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/signup`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
@@ -48,7 +46,7 @@ test.describe('Autenticação', () => {
     await page.context().clearCookies();
     
     // Tenta acessar dashboard sem autenticação
-    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Deve redirecionar para login OU mostrar dashboard (se test-bypass funcionar)
     const url = page.url();
@@ -60,8 +58,7 @@ test.describe('Autenticação', () => {
   });
 
   test('4. Formulário de login tem campos necessários', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verifica se há campos de email e senha OU botão OAuth
     const emailInput = page.locator('input[type="email"], input[name="email"]');
@@ -77,8 +74,7 @@ test.describe('Autenticação', () => {
   });
 
   test('5. Validação de formulário funciona', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Tenta submeter formulário vazio (se existir)
     const submitButton = page.locator('button[type="submit"], button:has-text("Entrar"), button:has-text("Login")');
@@ -95,8 +91,7 @@ test.describe('Autenticação', () => {
   });
 
   test('6. Navegação entre login e signup', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Procura link para signup
     const signupLink = page.getByText(/Criar conta|Sign up|Cadastrar/i);
@@ -104,7 +99,6 @@ test.describe('Autenticação', () => {
     
     if (hasSignupLink) {
       await signupLink.click();
-      await page.waitForLoadState('networkidle');
       
       const url = page.url();
       expect(url).toContain('/signup');
@@ -118,7 +112,7 @@ test.describe('Autenticação', () => {
     const protectedRoutes = ['/dashboard', '/products/new', '/plans'];
     
     for (const route of protectedRoutes) {
-      await page.goto(`${BASE_URL}${route}`, { waitUntil: 'networkidle' });
+      await page.goto(`${BASE_URL}${route}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
       const url = page.url();
       
       // Deve estar em login OU na rota (se test-bypass funcionar)
@@ -129,8 +123,7 @@ test.describe('Autenticação', () => {
 
   test('8. Callback de autenticação funciona', async ({ page }) => {
     // Simula callback do OAuth
-    await page.goto(`${BASE_URL}/auth/callback?code=test-code&next=/dashboard`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/auth/callback?code=test-code&next=/dashboard`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Deve processar ou redirecionar
     const url = page.url();

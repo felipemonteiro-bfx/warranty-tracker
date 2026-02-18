@@ -41,19 +41,18 @@ export async function updateSession(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // Bypass de autenticação para testes (Playwright)
-    const isTestBypass = request.cookies.get('test-bypass')?.value === 'true';
+    // Bypass de autenticação para testes (Playwright) - APENAS em development
+    const isTestBypass = process.env.NODE_ENV === 'development' && request.cookies.get('test-bypass')?.value === 'true';
 
-    if (
-      !user &&
-      !isTestBypass &&
-      !request.nextUrl.pathname.startsWith('/login') &&
-      !request.nextUrl.pathname.startsWith('/signup') &&
-      !request.nextUrl.pathname.startsWith('/auth') &&
-      !request.nextUrl.pathname.startsWith('/share') &&
-      !request.nextUrl.pathname.startsWith('/travel-check') &&
-      request.nextUrl.pathname !== '/'
-    ) {
+    const publicPaths = [
+      '/login', '/signup', '/auth', '/share', '/travel-check',
+      '/institucional', '/terms', '/privacy', '/compliance',
+      '/dev-bypass', '/api/',
+    ];
+    const isPublicPath = request.nextUrl.pathname === '/' ||
+      publicPaths.some(p => request.nextUrl.pathname.startsWith(p));
+
+    if (!user && !isTestBypass && !isPublicPath) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);

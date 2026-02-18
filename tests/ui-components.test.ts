@@ -22,8 +22,7 @@ test.describe('Componentes de UI - Testes de Funcionalidade', () => {
       }
     });
 
-    await page.goto(BASE_URL);
-    await page.waitForLoadState('networkidle');
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verifica se não há erros críticos no console
     const criticalErrors = errors.filter(e => 
@@ -89,8 +88,7 @@ test.describe('Componentes de UI - Testes de Funcionalidade', () => {
   });
 
   test('8. Imagens carregam corretamente', async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.waitForLoadState('networkidle');
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     const images = await page.locator('img').all();
     

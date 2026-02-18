@@ -14,12 +14,9 @@ test.describe('Testes de Integração - Fluxos Completos', () => {
   });
 
   test('1. Fluxo completo: Home → Dashboard', async ({ page }) => {
-    // Inicia na home
-    await page.goto(BASE_URL);
-    await expect(page.getByText(/PATRIMÔNIO|Guardião/i).first()).toBeVisible({ timeout: 5000 });
-    
-    // Navega para dashboard (com bypass de auth)
-    await page.goto(`${BASE_URL}/dashboard`);
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await expect(page.getByText(/PATRIMÔNIO|Guardião/i).first()).toBeVisible({ timeout: 8000 });
+    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await expect(page.getByText(/Meu Cofre|Dashboard/i).first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -31,8 +28,7 @@ test.describe('Testes de Integração - Fluxos Completos', () => {
     ];
 
     for (const { path, text } of pages) {
-      await page.goto(`${BASE_URL}${path}`);
-      await page.waitForLoadState('networkidle');
+      await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
       
       // Verifica se a página carregou sem erros críticos
       const hasContent = await page.getByText(text).first().isVisible().catch(() => false);
@@ -45,8 +41,7 @@ test.describe('Testes de Integração - Fluxos Completos', () => {
   });
 
   test('3. Formulários não quebram a página', async ({ page }) => {
-    await page.goto(`${BASE_URL}/products/new`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/products/new`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verifica se há inputs no formulário
     const inputs = await page.locator('input, textarea, select').count();
@@ -73,8 +68,7 @@ test.describe('Testes de Integração - Fluxos Completos', () => {
   });
 
   test('5. Middleware funciona corretamente', async ({ page }) => {
-    // Tenta acessar uma rota protegida sem autenticação
-    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Com bypass de teste, deve carregar normalmente
     // Sem bypass, deveria redirecionar para login

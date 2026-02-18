@@ -19,11 +19,16 @@ export interface Database {
           warranty_months: number
           invoice_url: string | null
           created_at: string
-          store?: string | null
-          price?: number | null
-          notes?: string | null
-          total_saved?: number | null
-          serial_number?: string | null
+          store: string | null
+          price: number | null
+          notes: string | null
+          total_saved: number | null
+          serial_number: string | null
+          estimated_sale_value: number | null
+          folder: string | null
+          maintenance_frequency_months: number | null
+          last_maintenance_date: string | null
+          card_brand: string | null
         }
         Insert: {
           id?: string
@@ -34,6 +39,16 @@ export interface Database {
           warranty_months: number
           invoice_url?: string | null
           created_at?: string
+          store?: string | null
+          price?: number | null
+          notes?: string | null
+          total_saved?: number | null
+          serial_number?: string | null
+          estimated_sale_value?: number | null
+          folder?: string | null
+          maintenance_frequency_months?: number | null
+          last_maintenance_date?: string | null
+          card_brand?: string | null
         }
         Update: {
           id?: string
@@ -44,6 +59,16 @@ export interface Database {
           warranty_months?: number
           invoice_url?: string | null
           created_at?: string
+          store?: string | null
+          price?: number | null
+          notes?: string | null
+          total_saved?: number | null
+          serial_number?: string | null
+          estimated_sale_value?: number | null
+          folder?: string | null
+          maintenance_frequency_months?: number | null
+          last_maintenance_date?: string | null
+          card_brand?: string | null
         }
       }
     }

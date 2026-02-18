@@ -46,7 +46,7 @@ export const CardHeader = ({ children, className }: { children: ReactNode; class
 );
 
 export const CardTitle = ({ children, className }: { children: ReactNode; className?: string }) => (
-  <h3 className={cn('text-xl font-bold tracking-tight text-slate-900', className)}>{children}</h3>
+  <h3 className={cn('text-xl font-bold tracking-tight text-slate-900 dark:text-white', className)}>{children}</h3>
 );
 
 export const CardContent = ({ children, className }: { children: ReactNode; className?: string }) => (

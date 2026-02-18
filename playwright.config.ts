@@ -2,10 +2,11 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 2,
+  timeout: 30000,
   reporter: process.env.CI 
     ? [
         ['html', { outputFolder: 'playwright-report', open: 'never' }],
@@ -24,9 +25,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'yarn dev',
+    command: 'npm run dev',
     url: 'http://127.0.0.1:3001',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 90000,
   },
 });

@@ -12,8 +12,8 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: optionalString(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optionalString(),
   
-  // Gemini AI
-  NEXT_PUBLIC_GEMINI_API_KEY: optionalString(),
+  // Gemini AI (server-only)
+  GEMINI_API_KEY: optionalString(),
   
   // Stripe Webhook
   STRIPE_WEBHOOK_SECRET: optionalString(),
@@ -39,7 +39,9 @@ function getEnv(): Env {
       envData.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || undefined;
     }
     envData.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || undefined;
-    envData.NEXT_PUBLIC_GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || undefined;
+    if (typeof window === 'undefined') {
+      envData.GEMINI_API_KEY = process.env.GEMINI_API_KEY || undefined;
+    }
 
     return envSchema.parse(envData);
   } catch (error) {

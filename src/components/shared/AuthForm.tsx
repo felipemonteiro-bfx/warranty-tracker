@@ -152,7 +152,7 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
         <CardTitle className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">
           {type === 'login' ? 'Bem-vindo de Volta' : 'Criar Conta Elite'}
         </CardTitle>
-        <p className="text-sm text-slate-500 font-medium">Proteja suas comunicações com inteligência.</p>
+        <p className="text-sm text-slate-500 font-medium">Proteja seu patrimônio com inteligência.</p>
       </CardHeader>
       <CardContent className="px-10 pb-12 space-y-8">
         
@@ -169,8 +169,8 @@ export const AuthForm = ({ type }: { type: 'login' | 'signup' }) => {
         </div>
 
         <div className="relative">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100 dark:border-white/5" /></div>
-          <div className="relative flex justify-center text-[10px] font-black uppercase"><span className="bg-white dark:bg-slate-900 px-4 text-slate-400">Ou use seu e-mail</span></div>
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100 dark:border-white/10" /></div>
+          <div className="relative flex justify-center text-[10px] font-black uppercase"><span className="bg-white/80 dark:bg-slate-900/80 px-4 text-slate-400">Ou use seu e-mail</span></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

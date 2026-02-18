@@ -33,7 +33,7 @@ test.describe('Fluxo Completo de Autenticação', () => {
   test('1. Fluxo completo: Home → Login → Dashboard', async ({ page }) => {
     // ETAPA 1: Acessar página inicial
     console.log('📄 Etapa 1: Acessando página inicial...');
-    await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verificar que a página inicial carregou
     await expect(page.getByText(/PATRIMÔNIO|Guardião/i).first()).toBeVisible({ timeout: 10000 });
@@ -51,7 +51,6 @@ test.describe('Fluxo Completo de Autenticação', () => {
     
     // ETAPA 3: Verificar que a página de login carregou
     console.log('📝 Etapa 3: Verificando página de login...');
-    await page.waitForLoadState('networkidle');
     
     // Verificar elementos da página de login
     const hasLoginForm = await page.locator('form').isVisible().catch(() => false);
@@ -125,7 +124,6 @@ test.describe('Fluxo Completo de Autenticação', () => {
       console.log('✅ Redirecionado para dashboard');
       
       // Verificar que o dashboard carregou
-      await page.waitForLoadState('networkidle');
       
       // Verificar elementos do dashboard
       const dashboardElements = [
@@ -165,9 +163,8 @@ test.describe('Fluxo Completo de Autenticação', () => {
   });
 
   test('2. Navegação Home → Login via botão', async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.waitForLoadState('networkidle');
-    
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.waitForTimeout(1000);
     // Verificar que há botão "Entrar"
     const entrarButton = page.getByRole('link', { name: /Entrar/i }).first();
     await expect(entrarButton).toBeVisible({ timeout: 5000 });
@@ -177,14 +174,12 @@ test.describe('Fluxo Completo de Autenticação', () => {
     await page.waitForURL(/\/login/, { timeout: 10000 });
     
     // Verificar que a página de login carregou
-    await page.waitForLoadState('networkidle');
     const url = page.url();
     expect(url).toContain('/login');
   });
 
   test('3. Formulário de login é funcional', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verificar campos do formulário
     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
@@ -220,8 +215,7 @@ test.describe('Fluxo Completo de Autenticação', () => {
   });
 
   test('4. Validação de formulário vazio', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     const submitButton = page.locator('button[type="submit"], button:has-text("Entrar")').first();
     
@@ -251,7 +245,7 @@ test.describe('Fluxo Completo de Autenticação', () => {
     }]);
     
     // Tentar acessar dashboard sem autenticação
-    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     const url = page.url();
     
@@ -265,8 +259,7 @@ test.describe('Fluxo Completo de Autenticação', () => {
   });
 
   test('6. Página de login não mostra erros críticos', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verificar que não há mensagem de erro crítico
     const criticalErrors = [
@@ -286,8 +279,7 @@ test.describe('Fluxo Completo de Autenticação', () => {
   });
 
   test('7. Navegação entre Login e Signup', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Procurar link para signup
     const signupLink = page.getByRole('link', { name: /Criar conta|Sign up|Cadastrar|Começar/i });
@@ -301,7 +293,6 @@ test.describe('Fluxo Completo de Autenticação', () => {
       expect(url).toContain('/signup');
       
       // Verificar que a página de signup carregou
-      await page.waitForLoadState('networkidle');
       const hasForm = await page.locator('form').isVisible().catch(() => false);
       expect(hasForm).toBeTruthy();
     }
@@ -318,8 +309,7 @@ test.describe('Fluxo Completo de Autenticação', () => {
     }]);
     
     // Tentar acessar login com parâmetro de erro de rate limit
-    await page.goto(`${BASE_URL}/login?error=rate_limit&message=test`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}/login?error=rate_limit&message=test`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
     // Verificar que não redirecionou novamente
     const url = page.url();

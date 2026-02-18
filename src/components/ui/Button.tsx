@@ -22,11 +22,11 @@ export const Button = memo(({
   }, []);
 
   const variants = {
-    primary: 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-lg shadow-emerald-200 hover:shadow-emerald-300',
+    primary: 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 hover:shadow-emerald-300',
     secondary: 'bg-cyan-900 text-white hover:bg-cyan-800',
-    outline: 'border-2 border-teal-100 hover:border-emerald-600 hover:text-emerald-600 bg-transparent',
-    ghost: 'hover:bg-teal-50 text-teal-700',
-    danger: 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-100',
+    outline: 'border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-600 hover:text-emerald-600 bg-transparent text-slate-700 dark:text-slate-300',
+    ghost: 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300',
+    danger: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-100 dark:border-red-900/50',
   };
 
   const sizes = {

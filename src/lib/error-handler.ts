@@ -136,11 +136,14 @@ export function normalizeError(error: unknown): AppErrorClass {
     });
   }
   
-  // Se for um objeto com propriedades de erro do Supabase
+  // Se for um objeto com propriedades de erro do Supabase (PostgrestError, AuthError, etc.)
   if (typeof error === 'object' && error !== null) {
-    const errorObj = error as any;
-    if (errorObj.message) {
-      return normalizeError(new Error(errorObj.message));
+    const errorObj = error as Record<string, any>;
+    const msg = errorObj.message || errorObj.msg || errorObj.error_description || errorObj.details;
+    if (msg) {
+      const wrapped = new Error(String(msg));
+      if (errorObj.code) (wrapped as any).code = errorObj.code;
+      return normalizeError(wrapped);
     }
   }
 
@@ -153,25 +156,34 @@ export function normalizeError(error: unknown): AppErrorClass {
 export function logError(error: AppErrorClass, context?: Record<string, unknown>): void {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  if (isDevelopment) {
-    console.error('[AppError]', {
-      type: error.type,
-      message: error.message,
-      code: error.code,
-      statusCode: error.statusCode,
-      context,
-      originalError: error.originalError,
-    });
-  } else {
-    // Em produção, logar apenas informações seguras
-    console.error('[AppError]', {
-      type: error.type,
-      message: error.message,
-      code: error.code,
-      statusCode: error.statusCode,
-      // Não logar originalError ou context em produção
-    });
+  const type = String(error?.type ?? 'UNKNOWN');
+  const message = String(error?.message ?? 'Sem mensagem');
+  const code = error?.code ? String(error.code) : undefined;
+  const statusCode = error?.statusCode;
+
+  const parts: string[] = [`[AppError] ${type}: ${message}`];
+  if (code) parts.push(`code=${code}`);
+  if (statusCode) parts.push(`status=${statusCode}`);
+
+  const main = parts.join(' | ');
+  const payload: Record<string, unknown> = { type, message };
+  if (code) payload.code = code;
+  if (statusCode) payload.statusCode = statusCode;
+
+  if (isDevelopment && error?.originalError) {
+    const orig = error.originalError;
+    if (orig instanceof Error) {
+      payload.original = `${orig.name}: ${orig.message}`;
+    } else if (typeof orig === 'object' && orig !== null) {
+      const o = orig as Record<string, unknown>;
+      payload.original = String(o.message ?? o.msg ?? o.details ?? o);
+    } else {
+      payload.original = String(orig);
+    }
   }
+  if (context && Object.keys(context).length > 0) payload.context = context;
+
+  console.error(main, payload);
 }
 
 /**

@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { checkoutRequestSchema } from '@/lib/validation';
 import { createError, ErrorType, logError, getUserFriendlyMessage } from '@/lib/error-handler';
-import { env } from '@/lib/env';
 
 export async function POST(req: Request) {
   try {
@@ -60,8 +59,8 @@ export async function POST(req: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${env.NEXT_PUBLIC_SUPABASE_URL?.replace('/rest/v1', '') || req.headers.get('origin') || 'http://localhost:3001'}/dashboard/plans?success=true`,
-      cancel_url: `${req.headers.get('origin') || 'http://localhost:3001'}/dashboard/plans?canceled=true`,
+      success_url: `${req.headers.get('origin') || 'http://localhost:3001'}/plans?success=true`,
+      cancel_url: `${req.headers.get('origin') || 'http://localhost:3001'}/plans?canceled=true`,
       metadata: {
         userId: user.id,
         planName: planName,

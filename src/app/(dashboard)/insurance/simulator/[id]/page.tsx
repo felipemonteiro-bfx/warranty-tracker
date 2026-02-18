@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ShieldCheck, Umbrella, Lock, ArrowLeft, Loader2, Sparkles, CheckCircle2, MessageCircle, Info } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,10 +31,6 @@ export default function InsuranceSimulatorPage({ params }: { params: Promise<{ i
   const runSimulation = async () => {
     setSimulating(true);
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      const genAI = new GoogleGenerativeAI(apiKey || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
       const prompt = `Você é um analista de riscos de seguros no Brasil. Simule um seguro para o seguinte produto:
       Nome: ${product.name}
       Preço: R$ ${product.price}
@@ -50,8 +45,14 @@ export default function InsuranceSimulatorPage({ params }: { params: Promise<{ i
         "why_protect": "Breve frase de impacto sobre por que segurar este bem."
       }`;
 
-      const result = await model.generateContent(prompt);
-      const data = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
+      const res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      const data = JSON.parse(json.text.replace(/```json|```/g, '').trim());
       setSimulation(data);
       toast.success('Simulação concluída com sucesso!');
     } catch (err) {

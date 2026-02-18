@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<{ user: { id: string } } | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
@@ -43,7 +43,7 @@ export default function Home() {
             <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Guardião<span className="text-emerald-600">.</span></span>
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-emerald-600 transition-all">Entrar</Link>
+            <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:text-emerald-600 transition-all">Entrar</Link>
             <Link href="/signup"><Button size="sm" className="h-10 px-6 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-500/20">Começar Agora</Button></Link>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function Home() {
                 <PlanItem text="Monitor de Câmbio e ROI" />
                 <PlanItem text="Zap Guardião (Alertas)" />
               </div>
-              <Button className="w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs">Assinar Platinum</Button>
+              <Link href="/signup"><Button className="w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs">Começar Agora</Button></Link>
             </Card>
 
             <Card className="border-none shadow-2xl bg-slate-900 text-white p-12 space-y-8 rounded-[48px] relative overflow-hidden group">
@@ -168,14 +168,14 @@ export default function Home() {
                 <PlanItem text="Dossiê de Sucessão Patrimonial" />
                 <PlanItem text="Suporte VIP 24h Humanizado" />
               </div>
-              <Button className="relative z-10 w-full h-16 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs border-none shadow-xl shadow-emerald-500/20">Proteger Família</Button>
+              <Link href="/signup"><Button className="relative z-10 w-full h-16 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs border-none shadow-xl shadow-emerald-500/20">Proteger Família</Button></Link>
             </Card>
           </div>
         </section>
 
         {/* Footer Master */}
         <footer className="mt-40 pt-20 border-t border-slate-100 dark:border-white/5 flex flex-col items-center space-y-12">
-          <div className="flex flex-wrap justify-center gap-12 text-sm font-black text-slate-400 uppercase tracking-widest">
+          <div className="flex flex-wrap justify-center gap-12 text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">
             <a href="mailto:felipe.monteiro@softlive.dev" className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer"><Mail className="h-4 w-4" /> felipe.monteiro@softlive.dev</a>
             <div className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer"><Landmark className="h-4 w-4" /> Auditado Digitalmente</div>
             <div className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer"><ShieldCheck className="h-4 w-4" /> Criptografia AES-256</div>
@@ -184,7 +184,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 text-xl font-black text-slate-900 dark:text-white">
               Guardião<span className="text-emerald-600 text-3xl">.</span>
             </div>
-            <p className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.5em]">Tecnologia para a Proteção da Riqueza Privada © 2026</p>
+            <p className="text-[9px] font-black text-slate-500 dark:text-slate-600 uppercase tracking-[0.5em]">Tecnologia para a Proteção da Riqueza Privada © 2026</p>
           </div>
         </footer>
       </main>
@@ -192,7 +192,7 @@ export default function Home() {
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: any, title: string, desc: string }) {
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
   return (
     <motion.div whileHover={{ scale: 1.02 }} className="p-10 bg-white dark:bg-slate-900 rounded-[48px] shadow-2xl border border-teal-50 dark:border-white/5 space-y-6 transition-all group">
       <div className="h-20 w-20 rounded-[32px] bg-slate-50 dark:bg-white/5 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">

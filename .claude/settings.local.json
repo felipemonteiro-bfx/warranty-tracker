@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn build)",
+      "Bash(docker compose:*)",
+      "Bash(yarn dev)",
+      "Bash(curl:*)",
+      "Bash(ls:*)",
+      "Bash(npx next build:*)",
+      "Bash(npx supabase status:*)",
+      "Bash(npx supabase projects list)",
+      "Bash(npx playwright test)"
+    ]
+  }
+}

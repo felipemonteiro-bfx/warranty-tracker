@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import webPush from 'web-push';
+import { z } from 'zod';
 
 const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -18,13 +19,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Não autenticado' }, { status: 401 });
     }
 
+    const schema = z.object({ recipientId: z.string().uuid(), content: z.string().optional() });
     const body = await req.json();
-    const recipientId = body?.recipientId as string | undefined;
-    const content = (body?.content as string) || '';
-
-    if (!recipientId) {
-      return NextResponse.json({ message: 'recipientId obrigatório' }, { status: 400 });
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ message: 'recipientId (uuid) obrigatório' }, { status: 400 });
     }
+    const { recipientId, content = '' } = parsed.data;
 
     const { data: rows, error } = await supabase
       .from('push_subscriptions')

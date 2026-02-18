@@ -54,3 +54,15 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+# Binários
+*.exe
+
+# Lock files (usando yarn.lock)
+package-lock.json
+
+# Playwright duplicados
+playwright.config.ts.txt
+
+# Supabase local
+supabase/.temp

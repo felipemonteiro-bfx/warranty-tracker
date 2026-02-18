@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Sparkles, Send, Loader2, Bot, User, ShieldCheck, Scale, History, RotateCcw, TrendingUp, Info } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -42,27 +41,22 @@ export default function AIConsultantPage() {
     setLoading(true);
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      const genAI = new GoogleGenerativeAI(apiKey || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      // Contexto enriquecido com os bens do usuário
       const assetContext = warranties.map(w => `- ${w.name} (Cat: ${w.category}, Valor: R$${w.price}, Compra: ${w.purchase_date})`).join('\n');
-      
-      const systemPrompt = `Você é o Consultor Private do "Guardião de Notas". 
+
+      const systemPrompt = `Você é o Consultor Private do "Guardião de Notas".
       Sua missão é ajudar o usuário a gerir seu patrimônio durável.
       Bens do usuário:\n${assetContext}\n
-      Diretrizes: Seja formal mas moderno, use o CDC (Código de Defesa do Consumidor) quando necessário e dê dicas de valorização. 
+      Diretrizes: Seja formal mas moderno, use o CDC (Código de Defesa do Consumidor) quando necessário e dê dicas de valorização.
       Sempre tente conectar as respostas com os bens que ele já possui.`;
 
-      const chat = model.startChat({
-        history: messages.map(m => ({ role: m.role, parts: m.parts })),
-        generationConfig: { maxOutputTokens: 800 }
+      const res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userText, context: systemPrompt }),
       });
-
-      // Envia o prompt de sistema na primeira mensagem ou como contexto oculto (simulado aqui via prefixo)
-      const result = await chat.sendMessage(`${systemPrompt}\n\nPergunta do Usuário: ${userText}`);
-      const botText = result.response.text();
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      const botText = json.text;
 
       setMessages(prev => [...prev, { role: 'model', parts: [{ text: botText }] }]);
     } catch (err) {

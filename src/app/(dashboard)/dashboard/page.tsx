@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Plus, Search, Filter, Grid, List, Calendar, ShieldAlert, ShieldCheck, ShieldX, FlaskConical } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
+import { SectionErrorBoundary } from '@/components/shared/SectionErrorBoundary';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Warranty } from '@/types/supabase';
 import { toast } from 'sonner';
@@ -25,14 +26,14 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const supabase = createClient();
-  
+
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  
+
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
@@ -43,90 +44,64 @@ export default function DashboardPage() {
         console.warn('Erro ao redirecionar para login:', error);
         window.location.href = '/login';
       }
-      return;
-    }
-    
-    if (user) {
-      try {
-        fetchWarranties();
-      } catch (error) {
-        console.error('Erro ao buscar garantias:', error);
-        // Não lançar erro - apenas logar
-      }
     }
   }, [user, authLoading, router]);
 
-  const fetchWarrantiesMemo = useCallback(() => {
+  useEffect(() => {
     if (user) {
-      try {
-        fetchWarranties();
-      } catch (error) {
-        console.error('Erro ao buscar garantias (callback):', error);
-        // Não lançar erro - fetchWarranties já tem tratamento interno
-      }
+      fetchWarranties();
     }
   }, [user, debouncedSearch, filterStatus]);
 
-  useEffect(() => {
-    try {
-      fetchWarrantiesMemo();
-    } catch (error) {
-      console.error('Erro no useEffect de fetchWarranties:', error);
-      // Não lançar erro - apenas logar
-    }
-  }, [fetchWarrantiesMemo]);
-
   const fetchWarranties = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      let query = supabase
+      const query = supabase
         .from('warranties')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      // Aplicar filtro de status
-      if (filterStatus !== 'all') {
-        const today = new Date().toISOString().split('T')[0];
-        const thirtyDaysFromNow = new Date();
-        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-        const thirtyDaysFromNowStr = thirtyDaysFromNow.toISOString().split('T')[0];
-
-        if (filterStatus === 'expired') {
-          // Garantias expiradas (data de expiração < hoje)
-          query = query.lt('purchase_date', today);
-        } else if (filterStatus === 'expiring') {
-          // Garantias vencendo em breve (próximos 30 dias)
-          // Isso requer cálculo, então vamos filtrar no cliente por enquanto
-        }
-      }
-
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        const msg = error.message?.toLowerCase() || '';
+        const isTableMissing = msg.includes('relation') && msg.includes('does not exist');
+        const isSchemaCache = msg.includes('schema cache') || msg.includes('could not find the table');
+        const isPermission = error.code === '42501' || msg.includes('permission denied');
 
-      // Filtrar por busca e status no cliente
+        if (isTableMissing || isSchemaCache) {
+          logger.warn('Tabela warranties indisponível', { code: error.code, msg });
+          setWarranties([]);
+          return;
+        }
+        if (isPermission) {
+          logger.warn('Sem permissão para acessar warranties (RLS)', { code: error.code });
+          setWarranties([]);
+          return;
+        }
+        throw error;
+      }
+
       let filtered = data || [];
-      
-      // Filtro de busca
+
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
-        filtered = filtered.filter(w => 
+        filtered = filtered.filter(w =>
           w.name.toLowerCase().includes(searchLower) ||
           w.category?.toLowerCase().includes(searchLower) ||
           w.store?.toLowerCase().includes(searchLower)
         );
       }
 
-      // Filtro de status (se não foi aplicado na query)
       if (filterStatus !== 'all') {
         filtered = filtered.filter(w => {
           const expirationDate = new Date(w.purchase_date);
           expirationDate.setMonth(expirationDate.getMonth() + w.warranty_months);
           const daysRemaining = Math.ceil((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-          
+
           if (filterStatus === 'expired') return daysRemaining < 0;
           if (filterStatus === 'expiring') return daysRemaining >= 0 && daysRemaining <= 30;
           if (filterStatus === 'active') return daysRemaining > 30;
@@ -139,7 +114,10 @@ export default function DashboardPage() {
     } catch (error) {
       const appError = normalizeError(error);
       logError(appError);
-      toast.error(getUserFriendlyMessage(appError));
+      const message = getUserFriendlyMessage(appError);
+      if (message) {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -153,22 +131,21 @@ export default function DashboardPage() {
         active: 0,
         expiring: 0,
         expired: 0,
-        totalValue: 0,
       };
     }
     const now = Date.now();
     const oneDay = 1000 * 60 * 60 * 24;
-    
+
     return warranties.reduce((acc, w) => {
       const expirationDate = new Date(w.purchase_date);
       expirationDate.setMonth(expirationDate.getMonth() + w.warranty_months);
       const daysRemaining = Math.ceil((expirationDate.getTime() - now) / oneDay);
-      
+
       acc.total++;
       if (daysRemaining > 30) acc.active++;
       else if (daysRemaining >= 0 && daysRemaining <= 30) acc.expiring++;
       else acc.expired++;
-      
+
       return acc;
     }, { total: 0, active: 0, expiring: 0, expired: 0 });
   }, [warranties, user]);
@@ -182,19 +159,20 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <SectionErrorBoundary sectionName="dashboard">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
               Meu Cofre
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-2">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Gerencie suas garantias e proteja seu patrimônio
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {process.env.NODE_ENV === 'development' && (
             <Button
               variant="outline"
               disabled={seeding}
@@ -220,6 +198,7 @@ export default function DashboardPage() {
               <FlaskConical className="h-5 w-5 mr-2" />
               {seeding ? 'Gerando...' : 'Dados de teste'}
             </Button>
+            )}
             <Button
               onClick={() => router.push('/products/new')}
               className="h-12 px-6 rounded-xl font-black uppercase tracking-wider shadow-lg"
@@ -231,7 +210,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Estatísticas */}
-        <motion.div 
+        <motion.div
           className="grid grid-cols-2 md:grid-cols-4 gap-4"
           initial="hidden"
           animate="visible"
@@ -291,7 +270,7 @@ export default function DashboardPage() {
               />
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <Button
               variant={filterStatus === 'all' ? 'primary' : 'outline'}
@@ -377,8 +356,8 @@ export default function DashboardPage() {
                 <AdBanner userCategories={[...new Set(warranties.map(w => w.category).filter((c): c is string => Boolean(c)))]} />
               </div>
             )}
-            
-            <motion.div 
+
+            <motion.div
               className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}
               initial="hidden"
               animate="visible"
@@ -396,9 +375,9 @@ export default function DashboardPage() {
                   key={warranty.id}
                   variants={{
                     hidden: { opacity: 0, y: 30, scale: 0.9 },
-                    visible: { 
-                      opacity: 1, 
-                      y: 0, 
+                    visible: {
+                      opacity: 1,
+                      y: 0,
                       scale: 1,
                       transition: {
                         type: "spring",
@@ -414,8 +393,8 @@ export default function DashboardPage() {
             </motion.div>
           </>
         )}
-      </div>
     </div>
+    </SectionErrorBoundary>
   );
 }
 

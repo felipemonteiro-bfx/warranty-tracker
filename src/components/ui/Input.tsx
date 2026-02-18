@@ -23,7 +23,7 @@ export const Input = memo(({ label, className, error, ...props }: InputProps) =>
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-sm font-bold text-slate-700 ml-1 block"
+          className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1 block"
         >
           {label}
         </motion.label>
@@ -36,12 +36,12 @@ export const Input = memo(({ label, className, error, ...props }: InputProps) =>
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={cn(
-            'flex h-12 w-full rounded-xl border-2 bg-white px-4 py-2 text-sm transition-all duration-300 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-12 w-full rounded-xl border-2 bg-white dark:bg-slate-800 px-4 py-2 text-sm text-slate-900 dark:text-white transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
             error 
               ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' 
               : isFocused
               ? 'border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 shadow-lg shadow-emerald-500/10'
-              : 'border-slate-100 hover:border-slate-200',
+              : 'border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600',
             className
           )}
           {...(props as any)}

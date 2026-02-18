@@ -6,7 +6,6 @@ import { Search, Package, ShieldCheck, User, Plus, FileText, Zap, X, LayoutDashb
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const CommandPalette = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,9 +61,6 @@ export const CommandPalette = () => {
     setLoading(true);
     try {
       const { data: allItems } = await supabase.from('warranties').select('id, name, category, folder, price, purchase_date, store');
-      
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const context = allItems?.map(i => `[ID:${i.id}] ${i.name} - Loja: ${i.store}, Preço: ${i.price}, Data: ${i.purchase_date}`).join('\n');
       const prompt = `Você é o buscador inteligente do Guardião de Notas.
@@ -72,9 +68,15 @@ export const CommandPalette = () => {
       Pergunta de busca: "${query}"
       Analise os bens e retorne APENAS os IDs (separados por vírgula) dos 3 itens mais relevantes para a pergunta do usuário. Se nada for relevante, retorne "null".`;
 
-      const result = await model.generateContent(prompt);
-      const ids = result.response.text().split(',').map(id => id.trim());
-      
+      const res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      const ids = json.text.split(',').map((id: string) => id.trim());
+
       const filtered = allItems?.filter(i => ids.includes(i.id)) || [];
       setResults(filtered);
     } catch (err) {

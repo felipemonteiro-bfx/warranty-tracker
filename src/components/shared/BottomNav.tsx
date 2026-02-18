@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, ShieldCheck, User, Plus } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, User, Plus, Landmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const BottomNav = () => {
@@ -16,6 +16,7 @@ export const BottomNav = () => {
     { name: 'Início', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
     { name: 'Cofre', path: '/vault', icon: <ShieldCheck className="h-5 w-5" /> },
     { name: 'Nova Nota', path: '/products/new', icon: <Plus className="h-6 w-6" />, primary: true },
+    { name: 'Patrimônio', path: '/patrimony', icon: <Landmark className="h-5 w-5" /> },
     { name: 'Perfil', path: '/profile', icon: <User className="h-5 w-5" /> },
   ];
 
@@ -48,10 +49,10 @@ export const BottomNav = () => {
               aria-label={item.name}
               aria-current={isActive ? 'page' : undefined}
             >
-              <div className={`transition-all duration-300 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`} aria-hidden="true">
+              <div className={`transition-all duration-300 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} aria-hidden="true">
                 {item.icon}
               </div>
-              <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
                 {item.name}
               </span>
               {isActive && (

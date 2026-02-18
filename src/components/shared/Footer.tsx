@@ -1,106 +1,27 @@
-import { Mail, Phone, MapPin, ShieldCheck, Globe } from 'lucide-react';
-import Image from 'next/image';
+import Link from 'next/link';
+import { ShieldCheck } from 'lucide-react';
 
 export const Footer = () => {
-  const logoUrl = "https://lh3.googleusercontent.com/gg-dl/AOI_d_9yfHBtXafzC8T3snFo7GdIXq6HQDLrt7Z5UxvjYWabsrwlj0P8aBncqzU2Ovv-1swtO5xi4N4ASTShjz3534eDjmZkVM-5XpKtkgZOgKZCfKpV3R-f4L2vd4ROx6xEZznyzv0oVwwV508ew19R7APwkVR_qqSSXJtDnNWguraFqE-xLQ=s1024-rj";
-
   return (
-    <footer className="mt-20 border-t border-teal-100 bg-white/50 backdrop-blur-sm pt-16 pb-12">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          {/* Coluna 1: Logo e Descrição */}
-          <div className="md:col-span-1 space-y-6">
-            <div className="flex items-center gap-2">
-              <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-emerald-600 shrink-0">
-                <Image 
-                  src={logoUrl} 
-                  alt="Logo Guardião de Notas" 
-                  fill 
-                  className="object-cover" 
-                  unoptimized
-                  sizes="32px"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent) {
-                      const fallback = parent.querySelector('.logo-fallback');
-                      if (fallback) {
-                        (fallback as HTMLElement).style.display = 'flex';
-                      }
-                    }
-                  }}
-                />
-                <div className="logo-fallback absolute inset-0 flex items-center justify-center bg-emerald-600" style={{ display: 'none' }}>
-                  <ShieldCheck className="h-5 w-5 text-white" />
-                </div>
-              </div>
-              <span className="text-lg font-black text-slate-900 dark:text-white">Guardião<span className="text-emerald-600">.</span></span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium leading-relaxed">
-              A maior plataforma de inteligência e gestão de garantias do Brasil. Protegendo seu patrimônio com tecnologia.
-            </p>
+    <footer className="border-t border-border/30 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm py-6">
+      <div className="px-4 md:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-emerald-600 text-[10px] font-black uppercase tracking-widest">
               <ShieldCheck className="h-4 w-4" /> Dados Criptografados
             </div>
           </div>
 
-          {/* Coluna 2: Institucional */}
-          <nav className="space-y-4" aria-label="Links institucionais">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Institucional</h4>
-            <ul className="space-y-2 text-sm font-bold text-slate-600">
-              <li><a href="/institucional" className="hover:text-emerald-600 transition-colors" aria-label="Sobre a empresa Guardião de Notas">Sobre Nós</a></li>
-              <li><a href="/terms" className="hover:text-emerald-600 transition-colors" aria-label="Termos e condições de uso">Termos de Uso</a></li>
-              <li><a href="/privacy" className="hover:text-emerald-600 transition-colors" aria-label="Política de privacidade e proteção de dados">Privacidade</a></li>
-              <li><a href="/compliance" className="hover:text-emerald-600 transition-colors" aria-label="Compliance e conformidade regulatória">Compliance</a></li>
-            </ul>
-          </nav>
-
-          {/* Coluna 3: Fale Conosco */}
-          <div className="md:col-span-2 space-y-6">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fale Conosco</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 group">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase">E-mail</p>
-                    <a href="mailto:felipe.monteiro@softlive.dev" className="text-xs font-bold text-slate-700 hover:text-emerald-600 transition-colors">felipe.monteiro@softlive.dev</a>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                    <Phone className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase">Telefone</p>
-                    <a href="tel:+5592993276765" className="text-xs font-bold text-slate-700 hover:text-emerald-600 transition-colors">(92) 99327-6765</a>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 group">
-                <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all shrink-0">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Sede</p>
-                  <p className="text-xs font-bold text-slate-700 leading-relaxed">Av. Paulista, 1000 - 12º Andar<br />Bela Vista, São Paulo - SP</p>
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <Link href="/institucional" className="hover:text-emerald-600 transition-colors">Sobre</Link>
+            <Link href="/terms" className="hover:text-emerald-600 transition-colors">Termos</Link>
+            <Link href="/privacy" className="hover:text-emerald-600 transition-colors">Privacidade</Link>
+            <Link href="/compliance" className="hover:text-emerald-600 transition-colors">Compliance</Link>
           </div>
-        </div>
 
-        <div className="mt-16 pt-8 border-t border-teal-50 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[10px] font-bold text-slate-400 uppercase">
-            © 2026 Guardião de Notas S.A. | CNPJ: 00.000.000/0001-00
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
+            &copy; {new Date().getFullYear()} Guardião de Notas S.A.
           </p>
-          <div className="flex gap-6 text-[10px] font-black text-emerald-600 uppercase tracking-tighter">
-            <span>Brasil</span>
-            <span>Global Access</span>
-          </div>
         </div>
       </div>
     </footer>

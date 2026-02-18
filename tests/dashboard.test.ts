@@ -72,12 +72,9 @@ test.describe('Dashboard - Funcionalidades Principais', () => {
   test('3. Estatísticas são exibidas', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`);
     
-    // Aguarda as estatísticas carregarem
-    await page.waitForTimeout(2000);
-    
-    // Verifica se pelo menos uma estatística está presente
-    const stats = page.locator('[class*="StatCard"], [class*="stat"]');
-    await expect(stats.first()).toBeVisible({ timeout: 5000 });
+    // Aguarda as estatísticas carregarem (labels: Total, Ativas, Vencendo, Expiradas)
+    const statsLabel = page.getByText(/^Total$|^Ativas$|^Vencendo$|^Expiradas$/).first();
+    await expect(statsLabel).toBeVisible({ timeout: 5000 });
   });
 
   test('4. Campo de busca está presente', async ({ page }) => {

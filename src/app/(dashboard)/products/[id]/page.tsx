@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText, Siren, Hammer, ArrowUpRight, TrendingUp, Scan, Camera, MapPin, Megaphone, ShoppingCart, Tag, BadgeCheck, Zap, Languages, Timer, BarChart3, ListChecks, MessageSquare, ThumbsUp, ThumbsDown, Share2, Calculator, Wallet, UserCircle2, Phone, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Calendar, Store, DollarSign, ExternalLink, Package, Clock, Sparkles, NotebookPen, HeartHandshake, ArrowLeft, Pencil, History, Plus, Loader2, Trash2, Umbrella, Scale, CalendarPlus, TrendingDown, Wrench, CheckCircle2, AlertTriangle, Key, Globe, CreditCard, Hash, ShieldAlert, Fingerprint, Coins, ShieldBan, Info, FileText, Siren, Hammer, ArrowUpRight, TrendingUp, Scan, Camera, MapPin, Megaphone, ShoppingCart, Tag, BadgeCheck, Zap, Languages, Timer, BarChart3, ListChecks, MessageSquare, MessageCircle, ThumbsUp, ThumbsDown, Share2, Calculator, Wallet, UserCircle2, Phone, AlertCircle } from 'lucide-react';
 import { formatDate, calculateExpirationDate, getDaysRemaining, generateICalLink } from '@/lib/utils/date-utils';
+import { getCardBenefits, isPriceProtectionActive, getDaysRemainingPriceProtection } from '@/lib/card-benefits';
 import Link from 'next/link';
 import { notFound, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -259,11 +260,18 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               {warranty.estimated_sale_value && (
                 <div className="pt-4 border-t border-slate-100 dark:border-white/5">
                   {existingListing ? (
-                    <Link href="/marketplace">
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl">
-                        <ShoppingCart className="h-4 w-4 mr-2" /> Ver Anúncio no Marketplace
-                      </Button>
-                    </Link>
+                    <div className="space-y-2">
+                      <Link href={`/marketplace/${existingListing.id}`}>
+                        <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl">
+                          <ShoppingCart className="h-4 w-4 mr-2" /> Ver Anúncio
+                        </Button>
+                      </Link>
+                      <Link href={`/marketplace/ofertas?listing=${existingListing.id}`}>
+                        <Button variant="outline" className="w-full text-[10px]">
+                          <MessageCircle className="h-4 w-4 mr-2" /> Ver ofertas recebidas
+                        </Button>
+                      </Link>
+                    </div>
                   ) : (
                     <Button 
                       onClick={handleCreateMarketplaceListing}
@@ -286,6 +294,48 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               )}
             </CardContent>
           </Card>
+
+          {/* Proteção de preço (benefício do cartão) */}
+          {(() => {
+            const benefits = getCardBenefits(warranty.card_brand);
+            const hasPriceProtection = benefits && benefits.price_protection_days > 0;
+            const isActive = hasPriceProtection && isPriceProtectionActive(warranty.purchase_date, benefits.price_protection_days);
+            const daysLeft = hasPriceProtection ? getDaysRemainingPriceProtection(warranty.purchase_date, benefits.price_protection_days) : 0;
+
+            if (!hasPriceProtection) return null;
+
+            return (
+              <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
+                <div className={`h-1.5 w-full ${isActive ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                <CardHeader className="p-6 pb-2">
+                  <CardTitle className="text-sm font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-amber-600" /> Proteção de preço
+                  </CardTitle>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                    Benefício do cartão {warranty.card_brand || ''}
+                  </p>
+                </CardHeader>
+                <CardContent className="p-6 pt-2 space-y-4">
+                  {isActive ? (
+                    <>
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                        Você tem <strong>{daysLeft} dias</strong> para acionar a proteção de preço. Se encontrar o mesmo produto mais barato, seu banco pode reembolsar a diferença.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => toast.info('Em breve: integração com verificação de preço. Por enquanto, acione diretamente com seu banco.')}
+                      >
+                        Verificar preço e acionar
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-500">Período de proteção de preço encerrado.</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           <Card className="border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
             <CardHeader className="p-6 pb-2">

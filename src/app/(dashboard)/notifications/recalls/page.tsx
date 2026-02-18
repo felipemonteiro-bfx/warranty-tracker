@@ -8,7 +8,6 @@ import { ShieldBan, AlertTriangle, Info, ShieldCheck, Loader2, ArrowLeft, Search
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export default function RecallCentralPage() {
   const [loading, setLoading] = useState(true);
@@ -32,15 +31,19 @@ export default function RecallCentralPage() {
     setScanning(true);
     try {
       const { data: items } = await supabase.from('warranties').select('name, store');
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const context = items?.map(i => i.name).join(', ');
-      const prompt = `Analise os seguintes produtos para recalls ou alertas de segurança globais (ANVISA/SENACON/FDA): ${context}. 
+      const prompt = `Analise os seguintes produtos para recalls ou alertas de segurança globais (ANVISA/SENACON/FDA): ${context}.
       Retorne em JSON um array de objetos: [{ "item": "nome", "type": "critical|warning|info", "message": "explicação", "action": "o que fazer" }]. Se nada for encontrado, retorne array vazio.`;
 
-      const result = await model.generateContent(prompt);
-      const data = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
+      const res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      const data = JSON.parse(json.text.replace(/```json|```/g, '').trim());
       
       setRecalls(data);
       toast.success('Scanner de Segurança concluído!');

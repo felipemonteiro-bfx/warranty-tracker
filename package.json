@@ -22,15 +22,19 @@
     "test:security": "playwright test tests/security.test.ts",
     "test:accessibility": "playwright test tests/accessibility.test.ts",
     "test:auth": "playwright test tests/auth.test.ts",
+    "test:journey": "playwright test tests/journey-complete.test.ts",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "pre-commit": "yarn type-check && yarn lint && yarn test",
     "ci": "yarn type-check && yarn lint && yarn test && yarn build",
     "setup-hooks": "node scripts/setup-hooks.js",
+    "db:push": "supabase db push",
+    "db:login": "supabase login",
     "prepare": "husky || true"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@sentry/nextjs": "^10.39.0",
     "@stripe/stripe-js": "^8.7.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
@@ -49,6 +53,7 @@
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "stripe": "^20.3.1",
+    "swr": "^2.4.0",
     "tailwind-merge": "^3.4.0",
     "web-push": "^3.6.7",
     "zod": "^4.3.6"

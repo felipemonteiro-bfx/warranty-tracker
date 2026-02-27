@@ -1,7 +1,8 @@
 import { Warranty } from '@/types/supabase';
 
 /**
- * Fixtures de dados para testes
+ * Fixtures de dados para testes E2E (Playwright).
+ * Para dados de apresentação/demo, veja src/lib/mock-data.ts
  */
 
 export const mockWarranties: Warranty[] = [

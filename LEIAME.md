@@ -1,8 +1,22 @@
-# Guardiao de Notas - Gestao Inteligente de Garantias e Patrimonio
+# Guardião de Notas - Gestão Inteligente de Garantias e Patrimônio
 
-Plataforma web completa para gestao de garantias, notas fiscais e patrimonio com IA integrada.
+Plataforma web para gestão de garantias, notas fiscais e patrimônio com IA integrada.
 
-## Como comecar
+---
+
+## Apresentação / Demo
+
+Para demonstrar a plataforma com dados prontos:
+
+1. Faça login (ou crie conta)
+2. No dashboard, clique em **"Dados de teste"** para popular garantias, notificações e mais
+3. Em produção: defina `NEXT_PUBLIC_DEMO_MODE=true` na Vercel para exibir o botão
+
+Roteiro completo: `docs/APRESENTACAO.md`
+
+---
+
+## Como começar
 
 ### 1. Pre-requisitos
 - Node.js 20+
@@ -64,11 +78,34 @@ npm test          # Terminal 2: testes Playwright
 npm run test:journey  # Apenas jornada do usuario
 ```
 
-## Scripts uteis
+## Documentação
+
+| Documento | Descrição |
+|-----------|-----------|
+| `docs/APRESENTACAO.md` | Roteiro de demo e apresentação |
+| `docs/SUPABASE_SETUP.md` | Configuração do Supabase |
+| `docs/CHECKLIST_GITHUB_VERCEL.md` | Variáveis de ambiente, Cron, login Google |
+| `docs/SENTRY_SETUP.md` | Monitoramento de erros |
+| `docs/TESTES.md` | Testes E2E com Playwright |
+
+## Verificar se tudo funciona
+
 ```bash
-yarn dev          # Servidor de desenvolvimento
-yarn build        # Build de producao
-yarn test         # Rodar testes E2E
-yarn lint         # Verificar linting
-yarn type-check   # Verificar tipos TypeScript
+npm run build        # Build de produção (deve passar)
+npm run dev          # Terminal 1: servidor
+npm run test:apis    # Terminal 2: testa APIs e variáveis
+npm run test:journey # Testes E2E da jornada do usuário (10 cenários)
 ```
+
+## Scripts úteis
+
+| Comando | Descrição |
+|---------|-----------|
+| `yarn dev` | Servidor de desenvolvimento (porta 3001) |
+| `yarn build` | Build de produção |
+| `yarn test` | Testes E2E (Playwright) |
+| `yarn test:journey` | Apenas jornada do usuário |
+| `yarn test:apis` | Testa APIs e variáveis de ambiente |
+| `yarn verify` | type-check + build (verificação rápida) |
+| `yarn type-check` | Verificar tipos TypeScript |
+| `yarn lint` | Verificar linting |

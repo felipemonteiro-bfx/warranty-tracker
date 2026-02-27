@@ -24,6 +24,7 @@
     "test:auth": "playwright test tests/auth.test.ts",
     "test:journey": "playwright test tests/journey-complete.test.ts",
     "test:apis": "node scripts/test-apis.js",
+    "verify": "npm run type-check && npm run build",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "pre-commit": "yarn type-check && yarn lint && yarn test",

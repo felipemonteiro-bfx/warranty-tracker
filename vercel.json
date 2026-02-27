@@ -1,8 +1,4 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/alerts",
-      "schedule": "0 8 * * *"
-    }
-  ]
+  "crons": [{"path": "/api/cron/alerts", "schedule": "0 8 * * *"}],
+  "installCommand": "npm install"
 }

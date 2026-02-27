@@ -21,6 +21,60 @@ Acesse: **Vercel Dashboard → seu projeto → Settings → Environment Variable
 | `VAPID_PRIVATE_KEY` | Push | Chave privada VAPID |
 | `CRON_SECRET` | ✅ Cron | Protege `/api/cron/alerts` - gere com: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry | Monitoramento de erros |
+| `NEXT_PUBLIC_DEMO_MODE` | Demo | `true` = exibe botão "Dados de teste" no dashboard (apresentações) |
+
+---
+
+## Login com Google (Supabase Auth)
+
+O Google OAuth **não usa variáveis na Vercel**. Tudo é configurado no **Supabase** e no **Google Cloud Console**.
+
+### 1. Google Cloud Console
+
+1. Acesse [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie um projeto ou selecione existente
+3. **APIs e Serviços** → **Credenciais** → **Criar credenciais** → **ID do cliente OAuth**
+4. Tipo: **Aplicativo da Web**
+5. **URIs de redirecionamento autorizados** – adicione:
+   - `https://[SEU-PROJECT-REF].supabase.co/auth/v1/callback`
+   - Exemplo: `https://mjjkzamyqisgmiekwupp.supabase.co/auth/v1/callback`
+6. Copie o **ID do cliente** e o **Segredo do cliente**
+
+### 2. Supabase Dashboard
+
+1. **Authentication** → **Providers** → **Google**
+2. Ative o provedor
+3. Cole o **Client ID** e **Client Secret** do Google
+4. Salvar
+
+### 3. Redirect URLs (Supabase)
+
+Em **Authentication** → **URL Configuration**:
+
+- **Site URL**: `https://guardiaonotas.com.br` (ou seu domínio)
+- **Redirect URLs**: adicione:
+  - `https://guardiaonotas.com.br/auth/callback`
+  - `https://seu-projeto.vercel.app/auth/callback`
+  - `http://localhost:3001/auth/callback` (desenvolvimento)
+
+---
+
+## Verificar variáveis (API)
+
+Com o servidor rodando e `CRON_SECRET` em `.env.local`:
+
+```bash
+# Local
+npm run test:apis
+
+# Produção (Vercel) – verifica variáveis configuradas no painel
+node scripts/test-apis.js https://guardiaonotas.com.br
+```
+
+Ou via curl:
+```bash
+curl "https://guardiaonotas.com.br/api/env-check?secret=SEU_CRON_SECRET"
+```
 
 ---
 

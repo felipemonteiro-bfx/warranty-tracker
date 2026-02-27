@@ -114,6 +114,31 @@ async function main() {
     results.push({ name: '/api/push/send', status: 'ERR', ok: false, note: e.message });
   }
 
+  // 7. Env check (com CRON_SECRET)
+  if (CRON_SECRET) {
+    try {
+      const r = await fetchJson(`${BASE}/api/env-check?secret=${encodeURIComponent(CRON_SECRET)}`);
+      if (r.status === 200 && r.body?.vars) {
+        results.push({
+          name: '/api/env-check',
+          status: r.status,
+          ok: true,
+          note: `${r.body.requiredOk}/${r.body.requiredTotal} obrigatórias, ${r.body.ok}/${r.body.total} totais`,
+        });
+        console.log('\n--- Variáveis de ambiente ---');
+        for (const [k, v] of Object.entries(r.body.vars || {})) {
+          const icon = v.set ? '✓' : (v.required ? '✗' : '○');
+          console.log(`  ${icon} ${k}: ${v.set ? 'OK' : 'não definida'}`);
+        }
+        console.log('');
+      } else {
+        results.push({ name: '/api/env-check', status: r.status, ok: false, note: r.body?.error || '' });
+      }
+    } catch (e) {
+      results.push({ name: '/api/env-check', status: 'ERR', ok: false, note: e.message });
+    }
+  }
+
   // Resumo
   console.log('Resultados:\n');
   let passed = 0;

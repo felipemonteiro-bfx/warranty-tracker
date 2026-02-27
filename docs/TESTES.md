@@ -26,10 +26,22 @@ Ou deixe o Playwright iniciar o servidor (pode levar ~60s na primeira vez):
 npm test
 ```
 
+## Testar APIs e variáveis
+
+Com o servidor rodando (`npm run dev`):
+
+```bash
+npm run test:apis
+```
+
+Verifica: `/api/cron/alerts`, `/api/checkout`, `/api/env-check` e exibe o status das variáveis de ambiente.
+
+Para produção: `node scripts/test-apis.js https://guardiaonotas.com.br`
+
 ## Rodar testes específicos
 
 ```bash
-npm run test:journey      # Jornada completa do usuário
+npm run test:journey      # Jornada completa do usuário (10 cenários)
 npm run test:basic        # Testes básicos (home, título)
 npm run test:auth         # Autenticação (login, signup)
 npm run test:dashboard    # Dashboard (requer mock)

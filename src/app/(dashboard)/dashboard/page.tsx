@@ -16,6 +16,7 @@ import { Warranty } from '@/types/supabase';
 import { toast } from 'sonner';
 import { normalizeError, getUserFriendlyMessage, logError } from '@/lib/error-handler';
 import { logger } from '@/lib/logger';
+import { IS_DEMO_MODE } from '@/lib/config';
 import { motion } from 'framer-motion';
 import { AdBanner } from '@/components/ads/AdBanner';
 
@@ -172,7 +173,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {process.env.NODE_ENV === 'development' && (
+            {IS_DEMO_MODE && (
             <Button
               variant="outline"
               disabled={seeding}
